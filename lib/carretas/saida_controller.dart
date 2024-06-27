@@ -23,6 +23,11 @@ class SaidaScreenState extends State<SaidaScreen> {
   final _motoristaController = TextEditingController();
   final _dtController = TextEditingController();
   final _placaController = TextEditingController();
+  final _paletsController = TextEditingController();
+  final _paletsQController = TextEditingController();
+  final _fitasController = TextEditingController();
+  final _ocorrenciaController = TextEditingController();
+  final _acaoController = TextEditingController();
 
   List<String> motoristas = [];
 
@@ -36,12 +41,24 @@ class SaidaScreenState extends State<SaidaScreen> {
   String data_saida = '';
   String horario_saida = '';
   String documentId = '';
+  String palets = '26';
+  String cheia = 'NÃO';
+  String palets_quebrado = '0';
+  String fitas_estouradas = '0';
+  String ocorrencia = '';
+  String acao = '';
+  String teve = 'NÃO';
 
   @override
   void initState() {
     super.initState();
     data_saida = getCurrentDate();
     horario_saida = getCurrentTime();
+    _paletsController.text = palets;
+    _paletsQController.text = palets_quebrado;
+    _fitasController.text = fitas_estouradas;
+    _ocorrenciaController.text = ocorrencia;
+    _acaoController.text = acao;
   }
 
   @override
@@ -61,6 +78,34 @@ class SaidaScreenState extends State<SaidaScreen> {
                       subtitle: const Text('Tela Inicial'),
                       onTap: () {
                         Navigator.of(context).pushReplacementNamed('/carretas');
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.add),
+                      title: const Text('Nova Entrada'),
+                      subtitle: const Text('Registrar nova entrada'),
+                      onTap: () {
+                        Navigator.of(context).pushReplacementNamed('/entrada');
+                      },
+                    ),
+                    //DESCARGA DE CARRETAS
+                    ListTile(
+                      leading: const Icon(Icons.arrow_downward),
+                      title: const Text('Descarga'),
+                      subtitle: const Text('Registrar descarga de carreta'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushReplacementNamed('/descargaCarreta');
+                      },
+                    ),
+                    //SAIDA DE CARRETAS
+                    ListTile(
+                      leading: const Icon(Icons.arrow_upward),
+                      title: const Text('Saida'),
+                      subtitle: const Text('Registrar saída de carreta'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushReplacementNamed('/saidaCarreta');
                       },
                     ),
                   ],
@@ -183,7 +228,72 @@ class SaidaScreenState extends State<SaidaScreen> {
                       ),
                     ),
                     const SizedBox(height: 10.0),
+                    Container(
+                      color: Colors.white,
+                      child: DropdownButtonFormField<String>(
+                        value: cheia, // Valor selecionado
+                        onChanged: (newValue) {
+                          setState(() {
+                            cheia = newValue!;
+                          });
+                        },
+                        items: ['SIM', 'NÃO'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        decoration: const InputDecoration(
+                          labelText: 'Carreta liberada carregada?',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
                     Card(
+                      child: TextFormField(
+                        onChanged: (text) {
+                          palets = text;
+                        },
+                        controller: _paletsController,
+                        decoration: const InputDecoration(
+                          labelText: 'Total Palets',
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.person),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
+                    Card(
+                      child: TextFormField(
+                        onChanged: (text) {
+                          palets_quebrado = text;
+                        },
+                        controller: _paletsQController,
+                        decoration: const InputDecoration(
+                          labelText: 'Palets Quebrados',
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.pool),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
+                    Card(
+                      child: TextFormField(
+                        onChanged: (text) {
+                          fitas_estouradas = text;
+                        },
+                        controller: _fitasController,
+                        decoration: const InputDecoration(
+                          labelText: 'Fitas Estouradas',
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.privacy_tip),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
+                    Card(
+                      color: Colors.grey[400],
                       child: TextFormField(
                         initialValue: getCurrentDate(),
                         onChanged: (text) {
@@ -199,6 +309,7 @@ class SaidaScreenState extends State<SaidaScreen> {
                     ),
                     const SizedBox(height: 10.0),
                     Card(
+                      color: Colors.grey[400],
                       child: TextFormField(
                         initialValue: getCurrentTime(),
                         onChanged: (text) {
@@ -218,7 +329,20 @@ class SaidaScreenState extends State<SaidaScreen> {
                         if (_validateFields()) {
                           // SALVAR DADOS NO FIREBASE
                           firestoreController.salvarDadosSaida(
-                              _dtController.text, data_saida, horario_saida);
+                            _dtController.text,
+                            data_saida,
+                            horario_saida,
+                            _paletsController.text,
+                            cheia,
+                            _paletsQController.text,
+                            _fitasController.text,
+                            teve,
+                          );
+                          firestoreController.salvarOcorrencias(
+                            _dtController.text,
+                            _ocorrenciaController.text,
+                            _acaoController.text,
+                          );
                           //});
                           Navigator.pushNamed(context, '/carretas');
                         }

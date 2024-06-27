@@ -4,6 +4,7 @@ import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/controller/excel_controller.dart';
 import 'package:meuapp/controller/firestore_controller.dart';
 import 'package:meuapp/model/lista_modificar.dart';
+import '../controller/login_controller.dart';
 import '../view/util.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -17,6 +18,9 @@ class SelecionarDTScreen extends StatefulWidget {
 class _SelecionarDTScreenState extends State<SelecionarDTScreen> {
   final excelControl = ExcelControl();
   final firestoreController = FirestoreController();
+
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
 
   List<String> motoristas = [];
 
@@ -238,8 +242,10 @@ class _SelecionarDTScreenState extends State<SelecionarDTScreen> {
   }
 
   Future<List<String>> getMotoristas() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('motoristas2').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('motoristas2')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
     final motoristas2 =
         snapshot.docs.map((doc) => doc['placa'] as String).toList();
     return motoristas2;

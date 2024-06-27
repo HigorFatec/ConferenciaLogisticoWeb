@@ -7,6 +7,7 @@ import 'package:meuapp/view/util.dart';
 
 import 'excel_carretas copy.dart';
 import 'excel_carretas.dart';
+import 'dart:async';
 
 class PrincipalCarretas extends StatefulWidget {
   const PrincipalCarretas({super.key});
@@ -20,12 +21,33 @@ class PrincipalCarretas extends StatefulWidget {
 class _PrincipalCarretasState extends State<PrincipalCarretas> {
   final excelCarreta = ExcelCarreta();
   final excelCarreta2 = ExcelCarreta2();
+  bool _funcaoChamada1 = false;
+  bool _funcaoChamada2 = false;
 
-  var excel;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    iniciarTimer();
+  }
+
+  void iniciarTimer() {
+    const Duration tempoDeEspera = Duration(hours: 1);
+
+    // Configura o timer para chamar a função a cada hora
+    _timer = Timer.periodic(tempoDeEspera, (Timer timer) {
+      // Reseta a variável para permitir uma nova chamada na próxima hora
+      _funcaoChamada1 = false;
+      _funcaoChamada2 = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Certifica-se de cancelar o timer quando o widget for descartado
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -63,8 +85,14 @@ class _PrincipalCarretasState extends State<PrincipalCarretas> {
                               fontWeight: FontWeight.bold,
                             )),
                         onTap: () async {
-                          await excelCarreta.CriarPlanilha();
-                          sucesso(context, 'Planilha enviada com sucesso!');
+                          if (!_funcaoChamada1) {
+                            await excelCarreta.CriarPlanilha();
+                            sucesso(context, 'Planilha enviada com sucesso!');
+                            _funcaoChamada1 = true;
+                          } else {
+                            erro(context,
+                                'Aguarde 60 minutos para chamar a função novamente.');
+                          }
                         }
                         // Simulando o processo de seleção de arquivo              },
                         ),
@@ -75,8 +103,14 @@ class _PrincipalCarretasState extends State<PrincipalCarretas> {
                               fontWeight: FontWeight.bold,
                             )),
                         onTap: () async {
-                          await excelCarreta2.CriarPlanilha();
-                          sucesso(context, 'Planilha enviada com sucesso!');
+                          if (!_funcaoChamada2) {
+                            //await excelCarreta2.CriarPlanilha();
+                            sucesso(context, 'Planilha enviada com sucesso!');
+                            _funcaoChamada2 = true;
+                          } else {
+                            erro(context,
+                                'Aguarde 60 minutos para chamar a função novamente.');
+                          }
                         }
                         // Simulando o processo de seleção de arquivo              },
                         ),
@@ -120,7 +154,7 @@ class _PrincipalCarretasState extends State<PrincipalCarretas> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("lib/images/fundoinicial.png"),
+            image: AssetImage("lib/images/back2.jpg"),
             fit: BoxFit.cover,
           ),
         ),
@@ -242,4 +276,27 @@ class _PrincipalCarretasState extends State<PrincipalCarretas> {
       },
     );
   }
+}
+
+int _tempoRestante() {
+  DateTime agora = DateTime.now();
+  int minutosAtual = agora.hour * 60 + agora.minute;
+
+  // Defina o horário da próxima chamada permitida
+  const int horaProximaChamada = 14; // Por exemplo, 14 horas
+  const int minutosDaProximaChamada = 0; // Por exemplo, 0 minutos
+
+  int minutosProximaChamada = horaProximaChamada * 60 + minutosDaProximaChamada;
+
+  // Calcule o tempo restante em minutos
+  int tempoRestante = minutosProximaChamada - minutosAtual;
+
+  // Se o tempo restante for não positivo, significa que já passou da hora permitida
+  if (tempoRestante <= 0) {
+    tempoRestante += 24 * 60; // Adiciona 24 horas ao tempo restante
+  }
+
+  print('Tempo restante: $tempoRestante minutos');
+
+  return tempoRestante;
 }

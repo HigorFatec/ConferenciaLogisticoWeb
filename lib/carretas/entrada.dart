@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 
@@ -37,6 +38,9 @@ class EntradaScreenState extends State<EntradaScreen> {
   String horario = '';
   String veiculo = 'ASA DELTA';
   String produto = 'DESCARTAVEL';
+  String origem = '';
+  String tipoFrete = 'T1';
+  String cpf = '';
 
   @override
   void initState() {
@@ -70,6 +74,34 @@ class EntradaScreenState extends State<EntradaScreen> {
                         Navigator.of(context).pushReplacementNamed('/carretas');
                       },
                     ),
+                    ListTile(
+                      leading: const Icon(Icons.add),
+                      title: const Text('Nova Entrada'),
+                      subtitle: const Text('Registrar nova entrada'),
+                      onTap: () {
+                        Navigator.of(context).pushReplacementNamed('/entrada');
+                      },
+                    ),
+                    //DESCARGA DE CARRETAS
+                    ListTile(
+                      leading: const Icon(Icons.arrow_downward),
+                      title: const Text('Descarga'),
+                      subtitle: const Text('Registrar descarga de carreta'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushReplacementNamed('/descargaCarreta');
+                      },
+                    ),
+                    //SAIDA DE CARRETAS
+                    ListTile(
+                      leading: const Icon(Icons.arrow_upward),
+                      title: const Text('Saida'),
+                      subtitle: const Text('Registrar saída de carreta'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushReplacementNamed('/saidaCarreta');
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -100,6 +132,182 @@ class EntradaScreenState extends State<EntradaScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 16.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            setState(() {
+                              dt = text;
+                            });
+                          },
+                          controller: _dtController,
+                          decoration: InputDecoration(
+                            labelText: 'Número da DT',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/listCarretas');
+                              },
+                              child: const Icon(
+                                Icons.list,
+                                color: Colors.black,
+                                size: 30.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Container(
+                        color: Colors.white,
+                        child: DropdownButtonFormField<String>(
+                          value: _nomeController.text, // Valor selecionado
+                          onChanged: (newValue) {
+                            setState(() {
+                              _nomeController.text = newValue!;
+                            });
+                          },
+                          items: [
+                            'Cargo Polo Comércio, Logística e',
+                            'Asus Transportes Ltda.',
+                            'Transportadora Almeida de Marília L',
+                            'Usina de Laticínios Jussara S.A.',
+                            'Ritmo Logística S.A.',
+                            'Jsl S.A.',
+                            'Cooperativa de Transporte Rodoviári',
+                            'Ghelere Transportes Ltda.',
+                            'Aga Armazéns Gerais e Logística Ltd',
+                            'Tecom Materiais de Construção e',
+                            'Transportadora Gobor Ltda.',
+                            'Carsten Serviços e Transportes Ltda',
+                            'Transportadora Gobor Ltda.',
+                            'Transporte Rodoviário 1500 Ltda.',
+                            'Jbs S.A.',
+                            'Itaobi Transportes Ltda.',
+                            'Ritmo Logistica S.A.',
+                            'J.C.E Transportes Ltda',
+                            'Coopercarga S.A.',
+                            'J Silveira Transportes Ltda.',
+                            'Rodo Drive Transportes E Logística',
+                            'J.C.E Transportes Ltda.',
+                            'Recolha de Vasilhame',
+                          ].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Transportadora',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            placaCarreta = text;
+                          },
+                          inputFormatters: [
+                            UpperCaseTextFormatter(),
+                            LengthLimitingTextInputFormatter(7),
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Placa Carreta',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.directions_car),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            motorista = text;
+                          },
+                          inputFormatters: [UpperCaseTextFormatter()],
+                          decoration: const InputDecoration(
+                            labelText: 'Motorista',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.person),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            cpf = text;
+                          },
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(11),
+                          ],
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'CPF do motorista',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.phone),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            telefone = text;
+                          },
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(11),
+                          ],
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Telefone do motorista',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.phone),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Container(
+                        color: Colors.white,
+                        child: DropdownButtonFormField<String>(
+                          value: origem, // Valor selecionado
+                          onChanged: (newValue) {
+                            setState(() {
+                              origem = newValue!;
+                            });
+                          },
+                          items: [
+                            'Alagoinhas/BA',
+                            'Alexânia/GO',
+                            'Araraquara/SP',
+                            'Arujá/SP',
+                            'Gravataí/RS',
+                            'Igrejinha/RS',
+                            'Jacareí/SP',
+                            'Pacatuba/CE',
+                            'Ponta Grossa/PR',
+                            'Recife/PE',
+                            'São Carlos/SP',
+                            'São José Dos Campos/SP',
+                            'Itaitinga/CE',
+                            'Itapissuma/PE',
+                            'Itu/SP',
+                          ].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Origem da Carreta',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
                       Container(
                         color: Colors.white,
                         child: DropdownButtonFormField<String>(
@@ -148,105 +356,57 @@ class EntradaScreenState extends State<EntradaScreen> {
                       Container(
                         color: Colors.white,
                         child: DropdownButtonFormField<String>(
-                          value: veiculo, // Valor selecionado
+                          value: tipoFrete, // Valor selecionado
                           onChanged: (newValue) {
                             setState(() {
-                              veiculo = newValue!;
+                              tipoFrete = newValue!;
                             });
                           },
-                          items: ['OCO', 'ASA DELTA', 'BITREM']
-                              .map((String value) {
+                          items: ['T1', 'T2'].map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(value),
                             );
                           }).toList(),
                           decoration: const InputDecoration(
-                            labelText: 'Tipo de Veiculo',
+                            labelText: 'Tipo de Frete',
+                            border: OutlineInputBorder(),
+                            hintText: 'T2 = Voltar carregado', // Texto de dica
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Container(
+                        color: Colors.white,
+                        child: DropdownButtonFormField<String>(
+                          value: veiculo, // Valor selecionado
+                          onChanged: (newValue) {
+                            setState(() {
+                              veiculo = newValue!;
+                            });
+                          },
+                          items: [
+                            'OCO',
+                            'ASA DELTA',
+                            'BITREM',
+                            'RODOTREM',
+                            'GRANILEIRO (GRADE ALTA)',
+                            'GRANILEIRO (GRADE BAIXA)'
+                          ].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Perfil do Veiculo',
                             border: OutlineInputBorder(),
                           ),
                         ),
                       ),
                       const SizedBox(height: 8.0),
                       Card(
-                        child: TextFormField(
-                          onChanged: (text) {
-                            setState(() {
-                              dt = text;
-                            });
-                          },
-                          controller: _dtController,
-                          decoration: InputDecoration(
-                            labelText: 'Número da DT',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/listCarretas');
-                              },
-                              child: const Icon(
-                                Icons.list,
-                                color: Colors.black,
-                                size: 30.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Card(
-                        child: TextFormField(
-                          onChanged: (text) {
-                            transportadora = text;
-                          },
-                          controller: _nomeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Transportadora',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.list),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Card(
-                        child: TextFormField(
-                          onChanged: (text) {
-                            placaCarreta = text;
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Placa Carreta',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.directions_car),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Card(
-                        child: TextFormField(
-                          onChanged: (text) {
-                            motorista = text;
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Motorista',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.person),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Card(
-                        child: TextFormField(
-                          onChanged: (text) {
-                            telefone = text;
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Telefone',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.directions_car),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Card(
+                        color: Colors.grey[400],
                         child: TextFormField(
                           initialValue: getCurrentDate(),
                           onChanged: (text) {
@@ -262,6 +422,7 @@ class EntradaScreenState extends State<EntradaScreen> {
                       ),
                       const SizedBox(height: 10.0),
                       Card(
+                        color: Colors.grey[400],
                         child: TextFormField(
                           initialValue: getCurrentTime(),
                           onChanged: (text) {
@@ -282,7 +443,7 @@ class EntradaScreenState extends State<EntradaScreen> {
                             // SALVAR DADOS NO FIREBASE
                             firestoreController.salvarDadosCarreta(
                               tipo,
-                              transportadora,
+                              _nomeController.text,
                               dt,
                               placa,
                               placaCarreta,
@@ -292,6 +453,9 @@ class EntradaScreenState extends State<EntradaScreen> {
                               horario,
                               produto,
                               veiculo,
+                              origem,
+                              tipoFrete,
+                              cpf,
                             );
                             //});
                             Navigator.pushNamed(context, '/carretas');
@@ -333,7 +497,16 @@ class EntradaScreenState extends State<EntradaScreen> {
   }
 
   bool _validateFields() {
-    if (_dtController.text.isEmpty || _nomeController.text.isEmpty) {
+    if (_dtController.text.isEmpty ||
+        _nomeController.text.isEmpty ||
+        placaCarreta.isEmpty ||
+        motorista.isEmpty ||
+        cpf.isEmpty ||
+        telefone.isEmpty ||
+        veiculo.isEmpty ||
+        produto.isEmpty ||
+        origem.isEmpty ||
+        tipoFrete.isEmpty) {
       erro(context, 'Preencha todos os campos.');
       return false;
     } else {
@@ -379,5 +552,16 @@ class EntradaScreenState extends State<EntradaScreen> {
         motoristas.removeAt(index);
       });
     }
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
   }
 }

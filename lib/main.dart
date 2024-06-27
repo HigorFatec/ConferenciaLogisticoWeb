@@ -54,6 +54,7 @@ import 'carretas/descarga.dart';
 import 'carretas/descarga_controller.dart';
 import 'carretas/saida.dart';
 import 'carretas/saida_controller.dart';
+import 'view/lista_notafiscal.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -130,6 +131,9 @@ Future<void> main() async {
         '/saida': (context) => const SaidaGerais(),
         '/saidaCarreta': (context) => const SaidaScreen(),
         '/listCarretas': (context) => const CarretaDTScreen(),
+
+        //RADIO FREQUENCIA
+        '/nf': (context) => const NotaFiscalScreen(),
       },
     ),
   );

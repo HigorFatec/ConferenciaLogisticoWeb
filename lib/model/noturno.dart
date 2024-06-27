@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:meuapp/controller/conferencia_controller.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/model/produtos_noturno.dart';
 import 'package:meuapp/view/util.dart';
+
+import '../controller/login_controller.dart';
 
 class NoturnasScreen extends StatefulWidget {
   final Noturn? Noturnaselecionada;
@@ -29,6 +32,9 @@ class _NoturnasScreenState extends State<NoturnasScreen> {
   final _dtController = TextEditingController();
   final _codigoController = TextEditingController();
 
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
+
   String nome = '';
   String quantidade = '';
   String tipo = 'caixa';
@@ -38,6 +44,19 @@ class _NoturnasScreenState extends State<NoturnasScreen> {
   String uni = '';
   String dt = '';
   String codigo = '';
+  String filial = 'RPU';
+
+  //
+  //Obtendo nome do usuario logado
+  //
+  Future<String> _getUsuarioLogado() async {
+    LoginController loginController = LoginController();
+
+    Map<String, dynamic> usuarioLogado = await loginController.usuarioLogado();
+    String usuario = usuarioLogado['nome'];
+    return usuario;
+  }
+  // FIM
 
   // ignore: prefer_typing_uninitialized_variables
   var excel;
@@ -47,6 +66,8 @@ class _NoturnasScreenState extends State<NoturnasScreen> {
   void initState() {
     super.initState();
     _carregarNoturnas();
+    _getUsuarioLogado();
+
     if (widget.Noturnaselecionada != null) {
       _nomeController.text = widget.Noturnaselecionada!.Noturna;
       nome = widget.Noturnaselecionada!.Noturna;
@@ -69,18 +90,26 @@ class _NoturnasScreenState extends State<NoturnasScreen> {
   }
 
   Future<void> _carregarNoturnas() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('Noturnas').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Noturnas')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final Noturnas = snapshot.docs.map((doc) {
       final data = doc.data();
       return Noturna(
         data: data['data'],
+        horario: data['horario'],
         dt: data['dt'],
         codigo: data['codigo'],
         nome: data['nome'],
         quantidade: data['quantidade'],
         observacoes: data['observacoes'],
+        usuario: data['usuario'],
+        filial: data['filial'],
+        km: data['km'],
+        placa: data['placa'],
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -92,53 +121,66 @@ class _NoturnasScreenState extends State<NoturnasScreen> {
   }
 
   void _adicionarNoturna() async {
+    // Obter o nome do usuário logado
+    String nomeUsuario = await _getUsuarioLogado();
+
+    // Obter o valores de KM e placa
+    List<String> km = await getKm();
+    List<String> placa = await getPlaca();
+
+    // Criar a nova Noturna com o nome do usuário logado
     final novaNoturna = Noturna(
       data: getCurrentDate(),
+      horario: getCurrentTime(),
       dt: _dtController.text,
       codigo: _codigoController.text,
       nome: _nomeController.text,
       quantidade: _quantidadeController.text,
       observacoes: tipo,
+      usuario: nomeUsuario,
+      filial: filial,
+      km: km.isNotEmpty ? km[0] : '', // Use o primeiro valor de KM, se houver
+      placa: placa.isNotEmpty ? placa[0] : '', //Use o primeiro valor da placa
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
 
-    final vendpalet = _vendpaletController.text;
-    final vendcx = _vendcxController.text;
-    final venduni = _venduniController.text;
-    final quantidade = novaNoturna.quantidade;
+    // final vendpalet = _vendpaletController.text;
+    // final vendcx = _vendcxController.text;
+    // final venduni = _venduniController.text;
+    // final quantidade = novaNoturna.quantidade;
 
-    if (tipo == 'caixa' && vendcx != quantidade) {
-      // Os valores são diferentes para o tipo 'caixa'
-      print('O valor de vendcx é diferente da quantidade');
-      erro(context, 'O valor de caixas é diferente de $vendcx');
-      // Exiba um erro ou faça o que for necessário aqui
-    } else if (tipo == 'unidade' && venduni != quantidade) {
-      // Os valores são diferentes para o tipo 'unidade'
-      print('O valor de venduni é diferente da quantidade');
-      erro(context, 'O valor de unidades é diferente de $venduni');
-      // Exiba um erro ou faça o que for necessário aqui
-    } else if (tipo == 'palet' && vendpalet != quantidade) {
-      // Os valores são diferentes para o tipo 'palet'
-      erro(context, 'O valor de palet é diferente de $vendpalet');
-    } else {
-      sucesso(context, 'Produto inserido com Sucesso!');
+    // if (tipo == 'caixa' && vendcx != quantidade) {
+    //   // Os valores são diferentes para o tipo 'caixa'
+    //   print('O valor de vendcx é diferente da quantidade');
+    //   erro(context, 'O valor de caixas é diferente de $vendcx');
+    //   // Exiba um erro ou faça o que for necessário aqui
+    // } else if (tipo == 'unidade' && venduni != quantidade) {
+    //   // Os valores são diferentes para o tipo 'unidade'
+    //   print('O valor de venduni é diferente da quantidade');
+    //   erro(context, 'O valor de unidades é diferente de $venduni');
+    //   // Exiba um erro ou faça o que for necessário aqui
+    // } else if (tipo == 'palet' && vendpalet != quantidade) {
+    //   // Os valores são diferentes para o tipo 'palet'
+    //   erro(context, 'O valor de palet é diferente de $vendpalet');
+    // } else {
+    sucesso(context, 'Produto inserido com Sucesso!');
 
-      final docRef = await FirebaseFirestore.instance
-          .collection('Noturnas')
-          .add(novaNoturna.toMap());
+    final docRef = await FirebaseFirestore.instance
+        .collection('Noturnas')
+        .add(novaNoturna.toMap());
 
-      final docId = docRef.id;
+    final docId = docRef.id;
 
-      novaNoturna.docId = docId;
+    novaNoturna.docId = docId;
 
-      setState(() {
-        _Noturnas.add(novaNoturna); // Adiciona a devolução à lista
-      });
+    setState(() {
+      _Noturnas.add(novaNoturna); // Adiciona a devolução à lista
+    });
 
-      _nomeController.clear();
-      _quantidadeController.clear();
-      //}
-    }
+    _nomeController.clear();
+    _quantidadeController.clear();
+    //}
   }
 
   void _removerNoturna(int index) async {
@@ -303,6 +345,9 @@ class _NoturnasScreenState extends State<NoturnasScreen> {
                         labelText: 'Quantidade',
                         border: OutlineInputBorder(),
                       ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
                     ),
                     const SizedBox(height: 8.0), // Reduzindo o espaçamento
                     DropdownButtonFormField<String>(
@@ -369,11 +414,17 @@ class _NoturnasScreenState extends State<NoturnasScreen> {
 
 class Noturna {
   final String data;
+  final String horario;
   final String dt;
   final String codigo;
   final String nome;
   final String quantidade;
   final String observacoes;
+  final String usuario;
+  final String filial;
+  final String km;
+  final String placa;
+  final String uid;
   String? docId;
 
   Noturna({
@@ -383,30 +434,55 @@ class Noturna {
     required this.nome,
     required this.quantidade,
     required this.observacoes,
+    required this.usuario,
+    required this.filial,
+    required this.horario,
+    required this.km,
+    required this.placa,
+    required this.uid,
     this.docId,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'data': data,
+      'horario': horario,
       'dt': dt,
       'codigo': codigo,
       'nome': nome,
       'quantidade': quantidade,
       'observacoes': observacoes,
+      'usuario': usuario,
+      'filial': filial,
+      'placa': placa,
+      'km': km,
+      'uid': uid,
     };
   }
 }
 
-Future<List<String>> getMotoristas() async {
+Future<List<String>> getKm() async {
   final snapshot =
       await FirebaseFirestore.instance.collection('motoristas2').get();
-  final motoristas2 = snapshot.docs.map((doc) => doc['dt'] as String).toList();
-  return motoristas2;
+  final km = snapshot.docs.map((doc) => doc['km'] as String).toList();
+  return km;
+}
+
+Future<List<String>> getPlaca() async {
+  final snapshot =
+      await FirebaseFirestore.instance.collection('motoristas2').get();
+  final placa = snapshot.docs.map((doc) => doc['placa'] as String).toList();
+  return placa;
 }
 
 String getCurrentDate() {
   DateTime now = DateTime.now();
   String formattedDate = DateFormat('dd/MM/yyyy').format(now);
   return formattedDate;
+}
+
+String getCurrentTime() {
+  DateTime now = DateTime.now();
+  String formattedTime = DateFormat('HH:mm').format(now);
+  return formattedTime;
 }

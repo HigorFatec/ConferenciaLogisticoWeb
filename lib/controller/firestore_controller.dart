@@ -1,10 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'login_controller.dart';
+
+final IdentificacaoController = LoginController();
+
 class FirestoreController {
   Future<void> exibirDadosColecao() async {
     try {
-      QuerySnapshot querySnapshot =
-          await FirebaseFirestore.instance.collection('motoristas').get();
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('motoristas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         // Primeiro documento da coleção
@@ -42,6 +48,7 @@ class FirestoreController {
         'km': km,
         'motorista': motorista,
         'placa': placa,
+        'uid': IdentificacaoController.idUsuario(),
       });
 
       print('Dados do motorista salvos com sucesso!');
@@ -61,6 +68,7 @@ class FirestoreController {
         'dt': dt,
         'placa': placa,
         'km': km,
+        'uid': IdentificacaoController.idUsuario(),
       });
 
       print('Dados do motorista salvos com sucesso!');

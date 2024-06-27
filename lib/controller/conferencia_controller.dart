@@ -5,8 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:meuapp/controller/login_controller.dart';
 
+import 'firestore_controller.dart';
+
 class ConferenciaControl {
   var excel;
+
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
 
   ConferenciaControl() {
     lerPlanilha();
@@ -21,99 +26,91 @@ class ConferenciaControl {
 
   Future<void> exportarExcel() async {
     try {
-      // OBTENDO VALOR DE DT
-      QuerySnapshot ValorDTSnapshot =
-          await FirebaseFirestore.instance.collection('motoristas2').get();
-      if (ValorDTSnapshot.docs.isNotEmpty) {
-        DocumentSnapshot motoristaDocument2 = ValorDTSnapshot.docs[0];
-        String dt = motoristaDocument2.get('dt');
-        //FIM
+      // Obtém todos os documentos da coleção "Noturnas"
+      QuerySnapshot noturnasQuery = await FirebaseFirestore.instance
+          .collection('Noturnas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
 
-        // Obtém todos os documentos da coleção "Noturnas"
-        QuerySnapshot noturnasQuery =
-            await FirebaseFirestore.instance.collection('Noturnas').get();
+      // Itera sobre cada documento na coleção "Noturnas" e os clona na subcoleção "Produtos"
+      for (QueryDocumentSnapshot noturnaDoc in noturnasQuery.docs) {
+        // Obtém os dados do documento da coleção "Noturnas"
+        Map<String, dynamic> dadosNoturna =
+            noturnaDoc.data() as Map<String, dynamic>;
 
-        // Itera sobre cada documento na coleção "Noturnas" e os clona na subcoleção "Produtos"
-        for (QueryDocumentSnapshot noturnaDoc in noturnasQuery.docs) {
-          // Obtém os dados do documento da coleção "Noturnas"
-          Map<String, dynamic> dadosNoturna =
-              noturnaDoc.data() as Map<String, dynamic>;
+        // Cria um novo documento na subcoleção "Produtos" com os mesmos dados
+        await FirebaseFirestore.instance
+            .collection('SaidasConferidas') // Coleção "DTS"
+            .add(dadosNoturna);
 
-          // Cria um novo documento na subcoleção "Produtos" com os mesmos dados
-          await FirebaseFirestore.instance
-              .collection('DTS') // Coleção "DTS"
-              .doc(dt) // Subcoleção "_dtController"
-              .collection(
-                  'Produtos') // Subcoleção "Produtos" dentro de "_dtController"
-              .add(dadosNoturna);
+        // Você também pode adicionar campos adicionais ou modificar os dados antes de adicionar na subcoleção
 
-          // Você também pode adicionar campos adicionais ou modificar os dados antes de adicionar na subcoleção
+        // //ADICIONANDO OS PRODUTOS NA COLEÇÃO ONDE SÃO RETORNAVEIS
+        // // Exibir dados da coleção "Noturnas"
+        // QuerySnapshot noturnasSnapshot =
+        //     await FirebaseFirestore.instance.collection('Noturnas').get();
+        // if (noturnasSnapshot.docs.isNotEmpty) {
+        //   for (DocumentSnapshot devolucaoDocument in noturnasSnapshot.docs) {
+        //     String codigo = devolucaoDocument.get('codigo');
+        //     String nome = devolucaoDocument.get('nome');
+        //     String quantidade = devolucaoDocument.get('quantidade');
+        //     String observacoes = devolucaoDocument.get('observacoes');
 
-          //ADICIONANDO OS PRODUTOS NA COLEÇÃO ONDE SÃO RETORNAVEIS
-          // Exibir dados da coleção "Noturnas"
-          QuerySnapshot noturnasSnapshot =
-              await FirebaseFirestore.instance.collection('Noturnas').get();
-          if (noturnasSnapshot.docs.isNotEmpty) {
-            for (DocumentSnapshot devolucaoDocument in noturnasSnapshot.docs) {
-              String codigo = devolucaoDocument.get('codigo');
-              String nome = devolucaoDocument.get('nome');
-              String quantidade = devolucaoDocument.get('quantidade');
-              String observacoes = devolucaoDocument.get('observacoes');
+        //     // OBTENDO OS DADOS PARA INSERIR NA COLEÇÃO ATIVOS "ConfNoturna"
+        //     if (codigo == '904502' ||
+        //         codigo == '904213' ||
+        //         codigo == '903061' ||
+        //         codigo == '903171' ||
+        //         codigo == '900090' ||
+        //         codigo == '901133' ||
+        //         codigo == '903482' ||
+        //         codigo == '902411' ||
+        //         codigo == '902432' ||
+        //         codigo == '904507' ||
+        //         codigo == '903949' ||
+        //         codigo == '903486' ||
+        //         codigo == '903489' ||
+        //         codigo == '904711' ||
+        //         codigo == '903950' ||
+        //         codigo == '904611') {
+        //       QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore
+        //           .instance
+        //           .collection('motoristas2')
+        //           .get();
+        //       if (motoristasSnapshot2.docs.isNotEmpty) {
+        //         DocumentSnapshot motoristaDocument =
+        //             motoristasSnapshot2.docs[0];
+        //         String dt = motoristaDocument.get('dt');
 
-              // OBTENDO OS DADOS PARA INSERIR NA COLEÇÃO ATIVOS "ConfNoturna"
-              if (codigo == '904502' ||
-                  codigo == '904213' ||
-                  codigo == '903061' ||
-                  codigo == '903171' ||
-                  codigo == '900090' ||
-                  codigo == '901133' ||
-                  codigo == '903482' ||
-                  codigo == '902411' ||
-                  codigo == '902432' ||
-                  codigo == '904507' ||
-                  codigo == '903949' ||
-                  codigo == '903486' ||
-                  codigo == '903489' ||
-                  codigo == '904711' ||
-                  codigo == '903950' ||
-                  codigo == '904611') {
-                QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore
-                    .instance
-                    .collection('motoristas2')
-                    .get();
-                if (motoristasSnapshot2.docs.isNotEmpty) {
-                  DocumentSnapshot motoristaDocument =
-                      motoristasSnapshot2.docs[0];
-                  String dt = motoristaDocument.get('dt');
+        //         await FirebaseFirestore.instance
+        //             .collection('ConfNoturna')
+        //             .add({
+        //           'data': getCurrentDate(),
+        //           'codigo': codigo,
+        //           'dt': dt,
+        //           'nome': nome,
+        //           'quantidade': quantidade,
+        //           'observacoes': observacoes,
+        //         });
+        //       }
+        //     }
+        //     //FIM DA FUNÇÃO PARA INSERIR OS DADOS NA COLEÇÃO "ConfNoturna"
 
-                  await FirebaseFirestore.instance
-                      .collection('ConfNoturna')
-                      .add({
-                    'data': getCurrentDate(),
-                    'codigo': codigo,
-                    'dt': dt,
-                    'nome': nome,
-                    'quantidade': quantidade,
-                    'observacoes': observacoes,
-                  });
-                }
-              }
-              //FIM DA FUNÇÃO PARA INSERIR OS DADOS NA COLEÇÃO "ConfNoturna"
-
-              // AQUI É AONDE SERÁ A COLEÇÃO QUE SERÁ VERIFICADA SE JA FOI CONFERIDA!!!
-              await FirebaseFirestore.instance.collection('Conferencia').add({
-                'dt': dt,
-              });
-              //FIM DA ONDE SERÁ ADICIONADA AS DTS DE CONFERENCIA
-            }
-          }
-        }
+        //     // AQUI É AONDE SERÁ A COLEÇÃO QUE SERÁ VERIFICADA SE JA FOI CONFERIDA!!!
+        //     await FirebaseFirestore.instance.collection('Conferencia').add({
+        //       'dt': dt,
+        //     });
+        //     //FIM DA ONDE SERÁ ADICIONADA AS DTS DE CONFERENCIA
+        //   }
+        // }
       }
       //FIM DA CONVERSÃO
 
       // Exibir dados da coleção "dt" "placa"
-      QuerySnapshot motoristasSnapshot =
-          await FirebaseFirestore.instance.collection('motoristas2').get();
+      QuerySnapshot motoristasSnapshot = await FirebaseFirestore.instance
+          .collection('motoristas2')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
       if (motoristasSnapshot.docs.isNotEmpty) {
         DocumentSnapshot motoristaDocument = motoristasSnapshot.docs[0];
 
@@ -142,8 +139,10 @@ class ConferenciaControl {
 
       // Exibir dados da coleção "produtos conferidos"
 
-      QuerySnapshot conferenciaSnapshot =
-          await FirebaseFirestore.instance.collection('Noturnas').get();
+      QuerySnapshot conferenciaSnapshot = await FirebaseFirestore.instance
+          .collection('Noturnas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
       if (conferenciaSnapshot.docs.isNotEmpty) {
         int linha =
             2; // Comece a partir da linha 6 (ou qualquer outra linha desejada)
@@ -173,8 +172,24 @@ class ConferenciaControl {
       }
 
       // Exibir dados da coleção "Palets"
-      QuerySnapshot paletsSnapshot =
-          await FirebaseFirestore.instance.collection('palets').get();
+      QuerySnapshot paletsSnapshot = await FirebaseFirestore.instance
+          .collection('palets')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
+
+      for (QueryDocumentSnapshot paletDoc in paletsSnapshot.docs) {
+        // Obtém os dados do documento da coleção "Palets"
+        Map<String, dynamic> dadosPalet =
+            paletDoc.data() as Map<String, dynamic>;
+
+        // Cria um novo documento na subcoleção "Produtos" com os mesmos dados
+        await FirebaseFirestore.instance
+            .collection('SaidasConferidas') // Coleção "DTS"
+            .add(dadosPalet);
+
+        // Você também pode adicionar campos adicionais ou modificar os dados antes de adicionar na subcoleção
+      }
+
       if (paletsSnapshot.docs.isNotEmpty) {
         Map<String, int> quantidadePorNome =
             {}; // Mapa para armazenar a quantidade por nome
@@ -217,8 +232,11 @@ class ConferenciaControl {
       }
 
       //FIRESTORAGE
-      QuerySnapshot motoristasSnapshot2 =
-          await FirebaseFirestore.instance.collection('motoristas2').get();
+      QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore.instance
+          .collection('motoristas2')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
+
       if (motoristasSnapshot2.docs.isNotEmpty) {
         DocumentSnapshot motoristaDocument2 = motoristasSnapshot2.docs[0];
 
@@ -272,24 +290,30 @@ String getCurrentTime() {
 }
 
 void excluirColecao() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('Noturnas').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('Noturnas')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirMotoristas() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('motoristas2').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('motoristas2')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirPalets() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('palets').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('palets')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }

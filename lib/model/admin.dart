@@ -6,8 +6,7 @@ import 'package:meuapp/controller/login_controller.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/controller/relatorio_ativos.dart';
 import 'package:meuapp/view/util.dart';
-
-import '../carretas/excel_carretas.dart';
+import '../carretas/excel_carretas copy.dart';
 import '../controller/json.dart';
 
 class AdminPage extends StatefulWidget {
@@ -23,7 +22,7 @@ class _AdminPageState extends State<AdminPage> {
   final excelControl2 = RelatorioAtivos();
   final excelControl = ConferenciaControl();
   final jsonControl = JsonClass();
-  final excelCarreta = ExcelCarreta();
+  final excelCarreta = ExcelCarreta2();
 
   var excel;
 
@@ -242,7 +241,7 @@ class _AdminPageState extends State<AdminPage> {
                     String admin = usuario['admin'];
 
                     //VERIFICANDO SE É ADMIN
-                    if (admin == 'true') {
+                    if (admin == 'true2') {
                       try {
                         await jsonControl.downloadFirestoreDevolutivos();
                         sucesso(context,
@@ -293,7 +292,7 @@ class _AdminPageState extends State<AdminPage> {
                     String admin = usuario['admin'];
 
                     //VERIFICANDO SE É ADMIN
-                    if (admin == 'true') {
+                    if (admin == 'true2') {
                       try {
                         await jsonControl.downloadFirestoreAvarias();
                         sucesso(context,

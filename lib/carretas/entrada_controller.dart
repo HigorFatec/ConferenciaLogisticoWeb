@@ -1,9 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
+import '../controller/login_controller.dart';
 
 class EntradaController {
   Future<void> salvarDadosDescarga(
       String dt, String data_descarga, String horario_descarga) async {
     try {
+      LoginController loginController = LoginController();
+      Map<String, dynamic> usuario = await loginController.usuarioLogado();
+      String nome = usuario['nome'];
+
       // Obtenha uma referência para a coleção "motoristas"
       CollectionReference carretaCollection =
           FirebaseFirestore.instance.collection('DescargaCarreta');
@@ -14,6 +21,9 @@ class EntradaController {
         'dt': dt,
         'data_descarga': data_descarga,
         'horario_descarga': horario_descarga,
+        'mes': getCurrentMonth(),
+        'usuario': nome,
+        'filial': 'rib',
       });
 
       await moverDados('DescargaCarreta', 'InfoCarretas', dt);
@@ -36,8 +46,15 @@ class EntradaController {
     String horario,
     String produto,
     String veiculo,
+    String origem,
+    String tipoFrete,
+    String cpf,
   ) async {
     try {
+      LoginController loginController = LoginController();
+      Map<String, dynamic> usuario = await loginController.usuarioLogado();
+      String nome = usuario['nome'];
+
       // Obtenha uma referência para a coleção "motoristas"
       CollectionReference carretaCollection =
           FirebaseFirestore.instance.collection('EntradaCarreta');
@@ -56,6 +73,12 @@ class EntradaController {
         'horario': horario,
         'produto': produto,
         'veiculo': veiculo,
+        'origem': origem,
+        'mes': getCurrentMonth(),
+        'tipo_frete': tipoFrete,
+        'cpf': cpf,
+        'usuario': nome,
+        'filial': 'rib',
       });
 
       CollectionReference dtCollection =
@@ -64,6 +87,9 @@ class EntradaController {
         'dt': dt,
         'data': data,
         'horario': horario,
+        'mes': getCurrentMonth(),
+        'usuario': nome,
+        'filial': 'rib',
       });
 
       print('Dados do motorista salvos com sucesso!');
@@ -73,8 +99,20 @@ class EntradaController {
   }
 
   Future<void> salvarDadosSaida(
-      String dt, String data_saida, String horario_saida) async {
+    String dt,
+    String data_saida,
+    String horario_saida,
+    String palets,
+    String cheia,
+    String palets_quebrado,
+    String fita_estourada,
+    String teve,
+  ) async {
     try {
+      LoginController loginController = LoginController();
+      Map<String, dynamic> usuario = await loginController.usuarioLogado();
+      String nome = usuario['nome'];
+
       // Obtenha uma referência para a coleção "motoristas"
       CollectionReference carretaCollection =
           FirebaseFirestore.instance.collection('DescargaCarreta');
@@ -83,8 +121,16 @@ class EntradaController {
       await carretaCollection.add({
         'operacao': 'saida',
         'dt': dt,
+        'palets': palets,
+        'cheia': cheia,
+        'palets_quebrados': palets_quebrado,
+        'fita_estourada': fita_estourada,
         'data_saida': data_saida,
         'horario_saida': horario_saida,
+        'mes': getCurrentMonth(),
+        'usuario': nome,
+        'ocorrencias': teve,
+        'filial': 'rib',
       });
       await moverDados('DescargaCarreta', 'InfoCarretas', dt);
       await moverDados('SaidaCarreta', 'Carretas', dt);
@@ -92,6 +138,38 @@ class EntradaController {
       print('Dados do motorista salvos com sucesso!');
     } catch (error) {
       print('Erro ao salvar os dados do motorista: $error');
+    }
+  }
+
+  Future<void> salvarOcorrencias(
+    String dt,
+    String ocorrencia,
+    String acao,
+  ) async {
+    try {
+      LoginController loginController = LoginController();
+      Map<String, dynamic> usuario = await loginController.usuarioLogado();
+      String nome = usuario['nome'];
+
+      // Obtenha uma referência para a coleção "motoristas"
+      CollectionReference carretaCollection =
+          FirebaseFirestore.instance.collection('OcorrenciasCarreta');
+
+      // Crie um novo documento na coleção usando o método "add()"
+      await carretaCollection.add({
+        'dt': dt,
+        'ocorrencia': ocorrencia,
+        'acao': acao,
+        'data': getCurrentDate(),
+        'horario': getCurrentTime(),
+        'mes': getCurrentMonth(),
+        'usuario': nome,
+        'filial': 'rib',
+      });
+
+      print('Dados salvos com sucesso!');
+    } catch (error) {
+      print('Erro ao salvar os dados: $error');
     }
   }
 }
@@ -129,4 +207,22 @@ Future<void> moverDados(
   } catch (e) {
     print('Erro ao mover dados: $e');
   }
+}
+
+String getCurrentMonth() {
+  DateTime now = DateTime.now();
+  String formattedMonth = DateFormat('MM').format(now);
+  return formattedMonth;
+}
+
+String getCurrentDate() {
+  DateTime now = DateTime.now();
+  String formattedDate = DateFormat('dd/MM/yyyy').format(now);
+  return formattedDate;
+}
+
+String getCurrentTime() {
+  DateTime now = DateTime.now();
+  String formattedTime = DateFormat('HH:mm:ss').format(now);
+  return formattedTime;
 }

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:meuapp/view/dados_motorista.dart';
 
 class Motorista {
@@ -26,24 +26,18 @@ Future<bool> _verificarDtNoFirebase(String dt) async {
   return query.docs.isNotEmpty;
 }
 
-Future<List<Motorista>?> fetchMotoristasFromExcel() async {
-  // Carregue o arquivo Excel como um objeto ByteData
-  final ByteData data = await rootBundle.load('lib/assets/escala.xlsx');
+Future<List<Motorista>?> fetchMotoristasFromFirebase() async {
+  // Obtenha os documentos da coleção 'DTSConferidas' no Firebase
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('Escala')
+      .where('data', isEqualTo: getCurrentDate())
+      .get();
 
-  // Converta o ByteData para uma lista de bytes
-  final Uint8List bytes = data.buffer.asUint8List();
-
-  // Crie um objeto Excel a partir dos bytes da planilha
-  final excel = Excel.decodeBytes(bytes);
-
-  // Obtenha a primeira planilha do arquivo Excel
-  final sheet = excel.tables[excel.tables.keys.first];
-
-  // Converta as linhas da planilha em objetos Motorista
-  final motoristas = sheet?.rows.map((row) {
-    final motorista = row[2]?.value?.toString() ?? '';
-    final dt = row[1]?.value?.toString() ?? '';
-    final placa = row[0]?.value?.toString() ?? '';
+  // Converta os documentos em objetos Motorista
+  final motoristas = querySnapshot.docs.map((doc) {
+    final motorista = doc['motorista'] ?? '';
+    final dt = (doc['dt'] ?? 0).toString();
+    final placa = doc['placa'] ?? '';
 
     return Motorista(
       motorista: motorista,
@@ -51,6 +45,8 @@ Future<List<Motorista>?> fetchMotoristasFromExcel() async {
       placa: placa,
     );
   }).toList();
+
+  motoristas.sort((a, b) => a.motorista.compareTo(b.motorista));
   return motoristas;
 }
 
@@ -101,7 +97,7 @@ class _MotoristasScreenState extends State<MotoristasScreen> {
             ),
             Expanded(
               child: FutureBuilder<List<Motorista>?>(
-                future: fetchMotoristasFromExcel().catchError((error) {
+                future: fetchMotoristasFromFirebase().catchError((error) {
                   print('Erro ao carregar motoristas: $error');
                   return null; // Return null to indicate error
                 }),
@@ -175,4 +171,10 @@ class _MotoristasScreenState extends State<MotoristasScreen> {
       ),
     );
   }
+}
+
+String getCurrentDate() {
+  DateTime now = DateTime.now();
+  String formattedDate = DateFormat('dd/MM/yyyy').format(now);
+  return formattedDate;
 }

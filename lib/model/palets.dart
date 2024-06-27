@@ -4,6 +4,8 @@ import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/model/produtos_palets.dart';
 import 'package:meuapp/view/util.dart';
 
+import '../controller/login_controller.dart';
+
 class PaletsScreen extends StatefulWidget {
   final Plts? paletSelecionado;
 
@@ -20,8 +22,12 @@ class _PaletsScreenState extends State<PaletsScreen> {
   final _nomeController = TextEditingController();
   final _quantidadeController = TextEditingController();
 
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
+
   String nome = '';
   String quantidade = '';
+  String filial = 'RPU';
   // ignore: prefer_typing_uninitialized_variables
   var excel;
 
@@ -37,14 +43,19 @@ class _PaletsScreenState extends State<PaletsScreen> {
   }
 
   Future<void> _carregarPalets() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('palets').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('palets')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final palets = snapshot.docs.map((doc) {
       final data = doc.data();
       return Palets(
+        dt: data['dt'],
+        filial: data['filial'],
         nome: data['nome'],
         quantidade: data['quantidade'],
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -56,9 +67,14 @@ class _PaletsScreenState extends State<PaletsScreen> {
   }
 
   void _adicionarPalet() async {
+    List<String> dts = await getDts();
+
     final novaPalet = Palets(
+      dt: dts.first,
+      filial: filial,
       nome: _nomeController.text,
       quantidade: int.tryParse(_quantidadeController.text) ?? 0,
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
 
@@ -324,21 +340,36 @@ class _PaletsScreenState extends State<PaletsScreen> {
 }
 
 class Palets {
+  final String dt;
+  final String filial;
   final String nome;
   final int quantidade;
-
+  final String uid;
   String? docId;
 
   Palets({
+    required this.dt,
+    required this.filial,
     required this.nome,
     required this.quantidade,
+    required this.uid,
     this.docId,
   });
 
   Map<String, dynamic> toMap() {
     return {
+      'dt': dt,
+      'filial': filial,
       'nome': nome,
       'quantidade': quantidade,
+      'uid': uid,
     };
   }
+}
+
+Future<List<String>> getDts() async {
+  final snapshot =
+      await FirebaseFirestore.instance.collection('motoristas2').get();
+  final dts = snapshot.docs.map((doc) => doc['dt'] as String).toList();
+  return dts;
 }

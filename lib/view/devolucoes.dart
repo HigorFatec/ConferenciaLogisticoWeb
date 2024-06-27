@@ -1,16 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_excel/excel.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/controller/excel_controller.dart';
 import 'package:meuapp/view/produtos_devolucao.dart';
 import 'package:meuapp/view/util.dart';
 
+import '../controller/login_controller.dart';
+import 'lista_notafiscal.dart';
+
 class DevolucoesScreen extends StatefulWidget {
   final Dev? devolucaoSelecionada;
+  final NotaFiscal? notaFiscalSelecionada;
 
-  const DevolucoesScreen({Key? key, this.devolucaoSelecionada})
+  const DevolucoesScreen(
+      {Key? key, this.devolucaoSelecionada, this.notaFiscalSelecionada})
       : super(key: key);
 
   @override
@@ -21,15 +25,18 @@ class DevolucoesScreen extends StatefulWidget {
 class _DevolucoesScreenState extends State<DevolucoesScreen> {
   final List<Devolucao> _devolucoes = [];
   final excelControl = ExcelControl();
-
   final _nomeController = TextEditingController();
   final _codigoController = TextEditingController();
   late final _quantidadeController = TextEditingController();
 
   String nome = '';
   String quantidade = '';
-  // ignore: prefer_typing_uninitialized_variables
-  var excel;
+  String notafiscal = '';
+  String dt = '';
+  String tipo = 'CAIXA';
+
+  //PROJETO PARA CONFERIR VARIOS CAMINHAO
+  final IdentificacaoController = LoginController();
 
   @override
   @override
@@ -41,18 +48,29 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
       _codigoController.text = widget.devolucaoSelecionada!.codigo;
       nome = widget.devolucaoSelecionada!.devolucao;
     }
+    if (widget.notaFiscalSelecionada != null) {
+      dt = widget.notaFiscalSelecionada!.dt;
+      _codigoController.text = widget.notaFiscalSelecionada!.codigo;
+      _nomeController.text = widget.notaFiscalSelecionada!.produto;
+      nome = widget.notaFiscalSelecionada!.produto;
+    }
   }
 
   Future<void> _carregarDevolucoes() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('devolucoes').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('devolucoes')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final devolucoes = snapshot.docs.map((doc) {
       final data = doc.data();
       return Devolucao(
+        dt: data['dt'],
         codigo: data['codigo'],
         nome: data['nome'],
         quantidade: data['quantidade'],
+        tipo: data['tipo'],
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -65,11 +83,18 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
 
   void _adicionarDevolucao() async {
     final novaDevolucao = Devolucao(
+      dt: dt,
       codigo: _codigoController.text,
       nome: _nomeController.text,
       quantidade: _quantidadeController.text,
+      tipo: tipo,
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
+
+    await FirebaseFirestore.instance
+        .collection('RadioFrequencia')
+        .add(novaDevolucao.toMap());
 
     final docRef = await FirebaseFirestore.instance
         .collection('devolucoes')
@@ -116,19 +141,12 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    lerPlanilha();
     final args = ModalRoute.of(context)?.settings.arguments as String?;
     if (args != null) {
       setState(() {
         _nomeController.text = args;
       });
     }
-  }
-
-  lerPlanilha() async {
-    ByteData data = await rootBundle.load("lib/assets/teste.xlsx");
-    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    excel = Excel.decodeBytes(bytes);
   }
 
   @override
@@ -217,6 +235,14 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
       ),
       appBar: AppBar(
         title: const Text('Devoluções'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).pushReplacementNamed('/nf');
+            },
+            icon: const Icon(Icons.search),
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -269,7 +295,7 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
                         fontSize: 20.0,
                       ),
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 10.0),
                     TextField(
                       onChanged: (text) {
                         nome = text;
@@ -286,7 +312,7 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 10.0),
                     TextField(
                       onChanged: (text) {
                         quantidade = text;
@@ -296,8 +322,34 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
                         labelText: 'Quantidade',
                         border: OutlineInputBorder(),
                       ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 8.0),
+                    Container(
+                      color: Colors.white,
+                      child: DropdownButtonFormField<String>(
+                        value: tipo, // Valor selecionado
+                        onChanged: (newValue) {
+                          setState(() {
+                            tipo = newValue!;
+                          });
+                        },
+                        items: ['CAIXA', 'PACK', 'UNIDADE'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
                     ElevatedButton(
                       onPressed: () {
                         if (_validateFields() == true) {
@@ -352,31 +404,32 @@ class _DevolucoesScreenState extends State<DevolucoesScreen> {
 }
 
 class Devolucao {
+  final String dt;
   final String codigo;
   final String nome;
   final String quantidade;
+  final String tipo;
+  final String uid;
   String? docId;
 
   Devolucao({
+    required this.dt,
     required this.codigo,
     required this.nome,
     required this.quantidade,
+    required this.tipo,
+    required this.uid,
     this.docId,
   });
 
   Map<String, dynamic> toMap() {
     return {
+      'dt': dt,
       'codigo': codigo,
       'nome': nome,
       'quantidade': quantidade,
+      'tipo': tipo,
+      'uid': uid,
     };
-  }
-}
-
-void excluirColecao() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('devolucoes').get();
-  for (var doc in snapshot.docs) {
-    doc.reference.delete();
   }
 }

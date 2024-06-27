@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_excel/excel.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/view/produtos_avarias.dart';
 import 'package:meuapp/view/util.dart';
+
+import '../controller/login_controller.dart';
 
 class AvariasScreen extends StatefulWidget {
   final Avar? avariaSelecionada;
@@ -25,8 +26,9 @@ class _AvariasScreenState extends State<AvariasScreen> {
 
   String nome = '';
   String quantidade = '';
-  // ignore: prefer_typing_uninitialized_variables
-  var excel;
+
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
 
   @override
   @override
@@ -40,8 +42,10 @@ class _AvariasScreenState extends State<AvariasScreen> {
   }
 
   Future<void> _carregarAvarias() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('avarias').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('avarias')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final avarias = snapshot.docs.map((doc) {
       final data = doc.data();
@@ -49,6 +53,7 @@ class _AvariasScreenState extends State<AvariasScreen> {
         nome: data['nome'],
         quantidade: data['quantidade'],
         observacoes: data['observacoes'],
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -65,6 +70,7 @@ class _AvariasScreenState extends State<AvariasScreen> {
       quantidade: _quantidadeController.text,
       observacoes:
           _observacoesController.text, // Adicione o valor vazio inicialmente
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
 
@@ -110,19 +116,12 @@ class _AvariasScreenState extends State<AvariasScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    lerPlanilha();
     final args = ModalRoute.of(context)?.settings.arguments as String?;
     if (args != null) {
       setState(() {
         _nomeController.text = args;
       });
     }
-  }
-
-  lerPlanilha() async {
-    ByteData data = await rootBundle.load("lib/assets/teste.xlsx");
-    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    excel = Excel.decodeBytes(bytes);
   }
 
   @override
@@ -296,6 +295,10 @@ class _AvariasScreenState extends State<AvariasScreen> {
                                 labelText: 'Quantidade',
                                 border: OutlineInputBorder(),
                               ),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                             ),
                             const SizedBox(height: 16.0),
                             TextField(
@@ -380,13 +383,14 @@ class Avaria {
   final String nome;
   final String quantidade;
   final String observacoes; // Nova propriedade
-
+  final String uid;
   String? docId;
 
   Avaria({
     required this.nome,
     required this.quantidade,
     required this.observacoes, // Adicione no construtor
+    required this.uid,
     this.docId,
   });
 
@@ -395,14 +399,7 @@ class Avaria {
       'nome': nome,
       'quantidade': quantidade,
       'observacoes': observacoes, // Adicione ao mapear para o Firestore
+      'uid': uid,
     };
-  }
-}
-
-void excluirColecao() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('avarias').get();
-  for (var doc in snapshot.docs) {
-    doc.reference.delete();
   }
 }

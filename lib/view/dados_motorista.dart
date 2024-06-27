@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/controller/firestore_controller.dart';
+import '../controller/login_controller.dart';
 import 'motorista_dt.dart';
 
 import '../view/util.dart';
@@ -20,6 +21,7 @@ class DadosMotoristaScreen extends StatefulWidget {
 
 class _DadosMotoristaScreenState extends State<DadosMotoristaScreen> {
   final firestoreController = FirestoreController();
+  final IdentificacaoController = LoginController();
 
   final _motoristaController = TextEditingController();
   final _dtController = TextEditingController();
@@ -341,23 +343,29 @@ class _DadosMotoristaScreenState extends State<DadosMotoristaScreen> {
   }
 
   Future<List<String>> getMotoristas() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('motoristas').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('motoristas')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
     final motoristas =
         snapshot.docs.map((doc) => doc['motorista'] as String).toList();
     return motoristas;
   }
 
   Future<List<String>> getDts() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('motoristas').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('motoristas')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
     final dts = snapshot.docs.map((doc) => doc['dt'] as String).toList();
     return dts;
   }
 
   Future<List<String>> getPlacas() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('motoristas').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('motoristas')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
     final placas = snapshot.docs.map((doc) => doc['placa'] as String).toList();
     return placas;
   }

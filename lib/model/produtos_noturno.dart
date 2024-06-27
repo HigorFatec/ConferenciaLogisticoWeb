@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:meuapp/model/noturno.dart';
+
+import '../controller/login_controller.dart';
 
 class Noturn {
   final String Noturna;
@@ -11,6 +12,7 @@ class Noturn {
   final String vendpalet;
   final String vendcx;
   final String venduni;
+  final String totalcx;
   final String placa;
 
   Noturn({
@@ -20,32 +22,48 @@ class Noturn {
     required this.vendpalet,
     required this.vendcx,
     required this.venduni,
+    required this.totalcx,
     required this.placa,
   });
 }
 
-Future<List<Noturn>?> fetchDevolucoesFromExcel() async {
-  // Carregue o arquivo Excel como um objeto ByteData
-  final ByteData data = await rootBundle.load('lib/assets/resultado.xlsx');
+final IdentificacaoController = LoginController();
 
-  // Converta o ByteData para uma lista de bytes
-  final Uint8List bytes = data.buffer.asUint8List();
+Future<List<Noturn>?> fetchDevolucoesFromFirestore() async {
+  // Obtenha uma referência para a coleção 'teste_json' no Firestore
+  final collection = FirebaseFirestore.instance.collection('SaidasProdutos');
 
-  // Crie um objeto Excel a partir dos bytes da planilha
-  final excel = Excel.decodeBytes(bytes);
+  // Obtenha a lista de strings 'dts' usando a função 'getDts()'
+  final dts = await getDts();
 
-  // Obtenha a primeira planilha do arquivo Excel
-  final sheet = excel.tables[excel.tables.keys.first];
+  // Converta a lista de strings para uma lista de inteiros
+  final dtsInt = dts.map(int.parse).toList();
 
-  // Converta as linhas da planilha em objetos Dev
-  final Noturnas = sheet?.rows.map((row) {
-    final dt = row[0]?.value?.toString() ?? '';
-    final codigo = row[1]?.value?.toString() ?? '';
-    final nome = row[2]?.value?.toString() ?? '';
-    final vendpalet = row[3]?.value?.toString() ?? '';
-    final vendcx = row[4]?.value?.toString() ?? '';
-    final venduni = row[5]?.value?.toString() ?? '';
-    final placa = row[8]?.value?.toString() ?? '';
+  // Obtenha os documentos da coleção 'teste_json'
+  final snapshot =
+      await collection.where('TRANSPORTE', isEqualTo: dtsInt.first).get();
+
+  // // Converta as linhas da planilha em objetos Dev
+  // final Noturnas = sheet?.rows.map((row) {
+  //   final dt = row[0]?.value?.toString() ?? '';
+  //   final codigo = row[1]?.value?.toString() ?? '';
+  //   final nome = row[2]?.value?.toString() ?? '';
+  //   final vendpalet = row[3]?.value?.toString() ?? '';
+  //   final vendcx = row[4]?.value?.toString() ?? '';
+  //   final venduni = row[5]?.value?.toString() ?? '';
+  //   final placa = row[8]?.value?.toString() ?? '';
+
+  // Converta os documentos do Firestore em objetos Noturn
+  final Noturnas = snapshot.docs.map((doc) {
+    final data = doc.data();
+    final dt = data['TRANSPORTE']?.toString() ?? '';
+    final codigo = data['MATERIAL']?.toString() ?? '';
+    final nome = data['DESCR. DO MATERIAL']?.toString() ?? '';
+    final vendpalet = data['VEND.PALET']?.toString() ?? '';
+    final vendcx = data['VEND.CAIXAS']?.toString() ?? '';
+    final venduni = data['VEND.UNIDADES']?.toString() ?? '';
+    final totalcx = data['TOTAL.CAIXAS']?.toString() ?? '';
+    final placa = data['Placa']?.toString() ?? '';
 
     return Noturn(
       Noturna: nome,
@@ -54,6 +72,7 @@ Future<List<Noturn>?> fetchDevolucoesFromExcel() async {
       vendpalet: vendpalet,
       vendcx: vendcx,
       venduni: venduni,
+      totalcx: totalcx,
       placa: placa,
     );
   }).toList();
@@ -88,7 +107,7 @@ class _NoturnaScreenState extends State<NoturnaScreen> {
           ', '); // Separe os valores com vírgula ou outro separador, se desejar
     });
 
-    final excelData = await fetchDevolucoesFromExcel();
+    final excelData = await fetchDevolucoesFromFirestore();
     if (excelData != null) {
       setState(() {
         Noturnas = excelData;
@@ -176,6 +195,15 @@ class _NoturnaScreenState extends State<NoturnaScreen> {
                             subtitle: Text(
                                 'Código: ${Noturna.codigo} \nVenda Palet: ${Noturna.vendpalet}, Venda Caixa: ${Noturna.vendcx}, \nVenda Unidade: ${Noturna.venduni}, PLACA: ${Noturna.placa}'),
                           ), //\nVenda Palet: ${Noturna.vendpalet}, Venda Caixa: ${Noturna.vendcx}, \nVenda Unidade: ${Noturna.venduni}
+                          Text(
+                            'Total em Caixas:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '${Noturna.totalcx}',
+                          ),
                         ],
                       ),
                     ),
@@ -191,8 +219,10 @@ class _NoturnaScreenState extends State<NoturnaScreen> {
 }
 
 Future<List<String>> getdt() async {
-  final snapshot =
-      await FirebaseFirestore.instance.collection('motoristas2').get();
+  final snapshot = await FirebaseFirestore.instance
+      .collection('motoristas2')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   final motoristas2 = snapshot.docs.map((doc) => doc['dt'] as String).toList();
   return motoristas2;
 }
@@ -205,4 +235,19 @@ Future<bool> _verificarCodigoNoFirebase(String codigo) async {
       .get();
 
   return query.docs.isNotEmpty;
+}
+
+String getCurrentDate() {
+  DateTime now = DateTime.now();
+  String formattedDate = DateFormat('dd/MM/yyyy').format(now);
+  return formattedDate;
+}
+
+Future<List<String>> getDts() async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('motoristas2')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
+  final dts = snapshot.docs.map((doc) => doc['dt'] as String).toList();
+  return dts;
 }

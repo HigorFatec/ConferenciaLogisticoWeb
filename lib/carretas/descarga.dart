@@ -52,6 +52,34 @@ class _DescargaGeraisState extends State<DescargaGerais> {
                         Navigator.of(context).pushReplacementNamed('/carretas');
                       },
                     ),
+                    ListTile(
+                      leading: const Icon(Icons.add),
+                      title: const Text('Nova Entrada'),
+                      subtitle: const Text('Registrar nova entrada'),
+                      onTap: () {
+                        Navigator.of(context).pushReplacementNamed('/entrada');
+                      },
+                    ),
+                    //DESCARGA DE CARRETAS
+                    ListTile(
+                      leading: const Icon(Icons.arrow_downward),
+                      title: const Text('Descarga'),
+                      subtitle: const Text('Registrar descarga de carreta'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushReplacementNamed('/descargaCarreta');
+                      },
+                    ),
+                    //SAIDA DE CARRETAS
+                    ListTile(
+                      leading: const Icon(Icons.arrow_upward),
+                      title: const Text('Saida'),
+                      subtitle: const Text('Registrar saída de carreta'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushReplacementNamed('/saidaCarreta');
+                      },
+                    ),
                   ],
                 ),
               ),

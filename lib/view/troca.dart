@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_excel/excel.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/view/produtos_troca.dart';
 import 'package:meuapp/view/util.dart';
+
+import '../controller/login_controller.dart';
 
 class TrocasScreen extends StatefulWidget {
   final Troc? trocaSelecionada;
@@ -24,8 +25,9 @@ class _TrocasScreenState extends State<TrocasScreen> {
 
   String nome = '';
   String quantidade = '';
-  // ignore: prefer_typing_uninitialized_variables
-  var excel;
+
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
 
   @override
   @override
@@ -39,14 +41,17 @@ class _TrocasScreenState extends State<TrocasScreen> {
   }
 
   Future<void> _carregarTrocas() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('trocas').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('trocas')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final trocas = snapshot.docs.map((doc) {
       final data = doc.data();
       return Troca(
         nome: data['nome'],
         quantidade: data['quantidade'],
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -61,6 +66,7 @@ class _TrocasScreenState extends State<TrocasScreen> {
     final novaTroca = Troca(
       nome: _nomeController.text,
       quantidade: _quantidadeController.text,
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
 
@@ -104,19 +110,12 @@ class _TrocasScreenState extends State<TrocasScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    lerPlanilha();
     final args = ModalRoute.of(context)?.settings.arguments as String?;
     if (args != null) {
       setState(() {
         _nomeController.text = args;
       });
     }
-  }
-
-  lerPlanilha() async {
-    ByteData data = await rootBundle.load("lib/assets/teste.xlsx");
-    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    excel = Excel.decodeBytes(bytes);
   }
 
   @override
@@ -284,6 +283,10 @@ class _TrocasScreenState extends State<TrocasScreen> {
                         labelText: 'Quantidade',
                         border: OutlineInputBorder(),
                       ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
                     ),
                     const SizedBox(height: 16.0),
                     ElevatedButton(
@@ -342,11 +345,13 @@ class _TrocasScreenState extends State<TrocasScreen> {
 class Troca {
   final String nome;
   final String quantidade;
+  final String uid;
   String? docId;
 
   Troca({
     required this.nome,
     required this.quantidade,
+    required this.uid,
     this.docId,
   });
 
@@ -354,14 +359,7 @@ class Troca {
     return {
       'nome': nome,
       'quantidade': quantidade,
+      'uid': uid,
     };
-  }
-}
-
-void excluirColecao() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('trocas').get();
-  for (var doc in snapshot.docs) {
-    doc.reference.delete();
   }
 }

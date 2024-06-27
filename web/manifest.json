@@ -1,11 +1,11 @@
 {
-    "name": "Retorno De Rotas",
-    "short_name": "Retorno De Rotas",
+    "name": "Carretas Logística",
+    "short_name": "Carretas Logística",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Conferência Retorno De Rotas",
+    "description": "Entrada e Saida de Carretas",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

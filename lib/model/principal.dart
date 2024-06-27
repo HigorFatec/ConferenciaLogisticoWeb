@@ -7,8 +7,6 @@ import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/controller/relatorio_ativos.dart';
 import 'package:meuapp/view/util.dart';
 
-import '../controller/json.dart';
-
 class PrincipalPage extends StatefulWidget {
   const PrincipalPage({super.key});
 
@@ -21,7 +19,6 @@ class PrincipalPage extends StatefulWidget {
 class _PrincipalPageState extends State<PrincipalPage> {
   final excelControl2 = RelatorioAtivos();
   final excelControl = ConferenciaControl();
-  final jsonControl = JsonClass();
 
   var excel;
 

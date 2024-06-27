@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_excel/excel.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/view/produtos_falta.dart';
 import 'package:meuapp/view/util.dart';
+
+import '../controller/login_controller.dart';
 
 class FaltasScreen extends StatefulWidget {
   final Falt? faltaSelecionada;
@@ -24,8 +25,9 @@ class _FaltasScreenState extends State<FaltasScreen> {
 
   String nome = '';
   String quantidade = '';
-  // ignore: prefer_typing_uninitialized_variables
-  var excel;
+
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
 
   @override
   @override
@@ -39,14 +41,17 @@ class _FaltasScreenState extends State<FaltasScreen> {
   }
 
   Future<void> _carregarFaltas() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('faltas').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('faltas')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final faltas = snapshot.docs.map((doc) {
       final data = doc.data();
       return Falta(
         nome: data['nome'],
         quantidade: data['quantidade'],
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -61,6 +66,7 @@ class _FaltasScreenState extends State<FaltasScreen> {
     final novaFalta = Falta(
       nome: _nomeController.text,
       quantidade: _quantidadeController.text,
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
 
@@ -103,19 +109,12 @@ class _FaltasScreenState extends State<FaltasScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    lerPlanilha();
     final args = ModalRoute.of(context)?.settings.arguments as String?;
     if (args != null) {
       setState(() {
         _nomeController.text = args;
       });
     }
-  }
-
-  lerPlanilha() async {
-    ByteData data = await rootBundle.load("lib/assets/teste.xlsx");
-    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    excel = Excel.decodeBytes(bytes);
   }
 
   @override
@@ -283,6 +282,10 @@ class _FaltasScreenState extends State<FaltasScreen> {
                         labelText: 'Quantidade',
                         border: OutlineInputBorder(),
                       ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
                     ),
                     const SizedBox(height: 16.0),
                     ElevatedButton(
@@ -341,11 +344,13 @@ class _FaltasScreenState extends State<FaltasScreen> {
 class Falta {
   final String nome;
   final String quantidade;
+  final String uid;
   String? docId;
 
   Falta({
     required this.nome,
     required this.quantidade,
+    required this.uid,
     this.docId,
   });
 
@@ -353,14 +358,7 @@ class Falta {
     return {
       'nome': nome,
       'quantidade': quantidade,
+      'uid': uid,
     };
-  }
-}
-
-void excluirColecao() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('faltas').get();
-  for (var doc in snapshot.docs) {
-    doc.reference.delete();
   }
 }

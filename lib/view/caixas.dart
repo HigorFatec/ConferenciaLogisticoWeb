@@ -4,6 +4,8 @@ import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/view/produtos_caixa.dart';
 import 'package:meuapp/view/util.dart';
 
+import '../controller/login_controller.dart';
+
 class CaixasScreen extends StatefulWidget {
   final Cxs? caixaSelecionada;
 
@@ -23,8 +25,9 @@ class _CaixasScreenState extends State<CaixasScreen> {
 
   String nome = '';
   String quantidade = '';
-  // ignore: prefer_typing_uninitialized_variables
-  var excel;
+
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
 
   @override
   @override
@@ -38,8 +41,10 @@ class _CaixasScreenState extends State<CaixasScreen> {
   }
 
   Future<void> _carregarCaixas() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('caixas').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('caixas')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final caixas = snapshot.docs.map((doc) {
       final data = doc.data();
@@ -47,7 +52,7 @@ class _CaixasScreenState extends State<CaixasScreen> {
         nome: data['nome'],
         quantidade: data['quantidade'],
         observacoes: data['observacoes'],
-
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -64,6 +69,7 @@ class _CaixasScreenState extends State<CaixasScreen> {
       quantidade: int.tryParse(_quantidadeController.text) ?? 0,
       observacoes:
           _observacoesController.text, // Adicione o valor vazio inicialmente
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
 
@@ -376,14 +382,14 @@ class Caixa {
   final String nome;
   final int quantidade;
   final String observacoes; // Nova propriedade
-
+  final String uid;
   String? docId;
 
   Caixa({
     required this.nome,
     required this.quantidade,
     required this.observacoes, // Adicione no construtor
-
+    required this.uid,
     this.docId,
   });
 
@@ -392,14 +398,7 @@ class Caixa {
       'nome': nome,
       'quantidade': quantidade,
       'observacoes': observacoes, // Adicione ao mapear para o Firestore
+      'uid': uid,
     };
-  }
-}
-
-void excluirColecao() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('caixas').get();
-  for (var doc in snapshot.docs) {
-    doc.reference.delete();
   }
 }

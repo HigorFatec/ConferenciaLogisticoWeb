@@ -79,11 +79,13 @@ flutter:
     - lib/assets/teste.xlsx
     - lib/assets/sku.xlsx
     - lib/assets/escala.xlsx
-    - lib/assets/resultado.xlsx
+    - lib/assets/resultado2.xlsx
     - lib/assets/BaseConferenciaNoturna.xlsx
     - lib/assets/RelatorioAtivos.xlsx
-    - lib/assets/RelatorioCarretas.xlsx
+    - lib/assets/RelatorioCarretas2.xlsx
     - lib/assets/abastecimento.xlsx
+    - lib/assets/resultado.xlsx
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

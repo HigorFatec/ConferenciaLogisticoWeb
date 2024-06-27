@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_excel/excel.dart';
 import 'package:meuapp/controller/drawner_controller.dart';
 import 'package:meuapp/view/produtos_sobra.dart';
 import 'package:meuapp/view/util.dart';
+
+import '../controller/login_controller.dart';
 
 class SobrasScreen extends StatefulWidget {
   final Sob? sobraSelecionada;
@@ -25,8 +26,9 @@ class _SobrasScreenState extends State<SobrasScreen> {
 
   String nome = '';
   String quantidade = '';
-  // ignore: prefer_typing_uninitialized_variables
-  var excel;
+
+  //Projeto conferir varios caminhoes
+  final IdentificacaoController = LoginController();
 
   @override
   @override
@@ -41,8 +43,10 @@ class _SobrasScreenState extends State<SobrasScreen> {
   }
 
   Future<void> _carregarSobras() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('sobras').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('sobras')
+        .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+        .get();
 
     final sobras = snapshot.docs.map((doc) {
       final data = doc.data();
@@ -50,6 +54,7 @@ class _SobrasScreenState extends State<SobrasScreen> {
         codigo: data['codigo'],
         nome: data['nome'],
         quantidade: data['quantidade'],
+        uid: data['uid'],
         docId: doc.id, // Atribuir o ID do documento ao objeto Devolucao
       );
     }).toList();
@@ -65,6 +70,7 @@ class _SobrasScreenState extends State<SobrasScreen> {
       codigo: _codigoController.text,
       nome: _nomeController.text,
       quantidade: _quantidadeController.text,
+      uid: IdentificacaoController.idUsuario(),
       docId: '', // Será preenchido posteriormente com o ID do documento
     );
 
@@ -108,19 +114,12 @@ class _SobrasScreenState extends State<SobrasScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    lerPlanilha();
     final args = ModalRoute.of(context)?.settings.arguments as String?;
     if (args != null) {
       setState(() {
         _nomeController.text = args;
       });
     }
-  }
-
-  lerPlanilha() async {
-    ByteData data = await rootBundle.load("lib/assets/teste.xlsx");
-    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    excel = Excel.decodeBytes(bytes);
   }
 
   @override
@@ -288,6 +287,10 @@ class _SobrasScreenState extends State<SobrasScreen> {
                         labelText: 'Quantidade',
                         border: OutlineInputBorder(),
                       ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
                     ),
                     const SizedBox(height: 16.0),
                     ElevatedButton(
@@ -347,12 +350,14 @@ class Sobra {
   final String codigo;
   final String nome;
   final String quantidade;
+  final String uid;
   String? docId;
 
   Sobra({
     required this.codigo,
     required this.nome,
     required this.quantidade,
+    required this.uid,
     this.docId,
   });
 
@@ -361,14 +366,7 @@ class Sobra {
       'codigo': codigo,
       'nome': nome,
       'quantidade': quantidade,
+      'uid': uid,
     };
-  }
-}
-
-void excluirColecao() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('sobras').get();
-  for (var doc in snapshot.docs) {
-    doc.reference.delete();
   }
 }

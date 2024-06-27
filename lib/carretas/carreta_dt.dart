@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import 'entrada.dart';
 
@@ -25,30 +25,31 @@ Future<bool> _verificarDtNoFirebase(String dt) async {
   return query.docs.isNotEmpty;
 }
 
-Future<List<CarretaDT>?> fetchMotoristasFromExcel() async {
-  // Carregue o arquivo Excel como um objeto ByteData
-  final ByteData data = await rootBundle.load('lib/assets/abastecimento.xlsx');
+DateTime currentDate = DateTime.now();
+DateTime tenDaysAgo = currentDate.subtract(Duration(days: 2)); // 5 dias atrás
+String formattedStartDate = DateFormat('dd/MM/yyyy').format(tenDaysAgo);
+String formattedEndDate = DateFormat('dd/MM/yyyy').format(currentDate);
 
-  // Converta o ByteData para uma lista de bytes
-  final Uint8List bytes = data.buffer.asUint8List();
+Future<List<CarretaDT>?> fetchMotoristasFromFirebase() async {
+  // Obtenha os documentos da coleção 'DTSConferidas' no Firebase
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('EscalaCarretas')
+      .where('data', isGreaterThanOrEqualTo: formattedStartDate)
+      .where('data', isLessThanOrEqualTo: formattedEndDate)
+      .get();
 
-  // Crie um objeto Excel a partir dos bytes da planilha
-  final excel = Excel.decodeBytes(bytes);
-
-  // Obtenha a primeira planilha do arquivo Excel
-  final sheet = excel.tables[excel.tables.keys.first];
-
-  // Converta as linhas da planilha em objetos Motorista
-  final motoristas = sheet?.rows.map((row) {
-    final nome = row[1]?.value?.toString() ?? '';
-    final dt = row[0]?.value?.toString() ?? '';
+  // Converta os documentos em objetos Motorista
+  final nomes = querySnapshot.docs.map((doc) {
+    final nome = doc['nome'] ?? '';
+    final dt = (doc['dt'] ?? 0).toString();
 
     return CarretaDT(
       nome: nome,
       dt: dt,
     );
   }).toList();
-  return motoristas;
+  nomes.sort((a, b) => a.nome.compareTo(b.nome));
+  return nomes;
 }
 
 class CarretaDTScreen extends StatefulWidget {
@@ -71,7 +72,7 @@ class _CarretaDTScreenState extends State<CarretaDTScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('lib/images/back2.jpg'),
+            image: AssetImage('lib/images/new3.jpg'),
             fit: BoxFit.cover,
           ),
         ),
@@ -98,7 +99,7 @@ class _CarretaDTScreenState extends State<CarretaDTScreen> {
             ),
             Expanded(
               child: FutureBuilder<List<CarretaDT>?>(
-                future: fetchMotoristasFromExcel().catchError((error) {
+                future: fetchMotoristasFromFirebase().catchError((error) {
                   print('Erro ao carregar motoristas: $error');
                   return null; // Return null to indicate error
                 }),

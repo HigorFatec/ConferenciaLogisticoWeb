@@ -5,9 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:meuapp/controller/login_controller.dart';
 
+import 'firestore_controller.dart';
+
 class ExcelControl {
   var excel;
   String cidade = 'RPU';
+
+  // PROJETO PARA CONFERIR VARIOS CAMINHOES DE UMA SO VEZ
+  final IdentificacaoController = LoginController();
 
   ExcelControl() {
     lerPlanilha();
@@ -22,8 +27,10 @@ class ExcelControl {
   Future<void> exibirDadosECriarPlanilha() async {
     try {
       // Exibir dados da coleção "motoristas"
-      QuerySnapshot motoristasSnapshot =
-          await FirebaseFirestore.instance.collection('motoristas').get();
+      QuerySnapshot motoristasSnapshot = await FirebaseFirestore.instance
+          .collection('motoristas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
       if (motoristasSnapshot.docs.isNotEmpty) {
         DocumentSnapshot motoristaDocument = motoristasSnapshot.docs[0];
 
@@ -31,6 +38,7 @@ class ExcelControl {
         String km = motoristaDocument.get('km');
         String motorista = motoristaDocument.get('motorista');
         String placa = motoristaDocument.get('placa');
+        String uid = motoristaDocument.get('uid');
 
         Sheet p = excel['Plan1'];
         p.cell(CellIndex.indexByString("A3")).value = dt;
@@ -50,6 +58,7 @@ class ExcelControl {
           'placa': placa,
           'motorista': motorista,
           'filial': cidade,
+          'uid': uid,
         });
 
         // FIM DO ARMAZENAMENTO DE MOTORISTAS
@@ -61,6 +70,7 @@ class ExcelControl {
             .collection('DTSConferidas')
             .where('data', isEqualTo: getCurrentDate())
             .where('dt', isEqualTo: dt)
+            .where('uid', isEqualTo: IdentificacaoController.idUsuario())
             .get();
         if (querySnapshot.docs.isNotEmpty) {
           isDocumentExists = true;
@@ -70,6 +80,7 @@ class ExcelControl {
             'data': getCurrentDate(),
             'dt': dt,
             'motorista': motorista,
+            'uid': uid,
           });
         }
         //FIM DO ARMAZENAMENTO DE DT
@@ -89,8 +100,10 @@ class ExcelControl {
       p.cell(CellIndex.indexByString("B43")).value = nome;
 
       // Exibir dados da coleção "devolucoes"
-      QuerySnapshot devolucoesSnapshot =
-          await FirebaseFirestore.instance.collection('devolucoes').get();
+      QuerySnapshot devolucoesSnapshot = await FirebaseFirestore.instance
+          .collection('devolucoes')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
       if (devolucoesSnapshot.docs.isNotEmpty) {
         int linha =
             6; // Comece a partir da linha 6 (ou qualquer outra linha desejada)
@@ -109,8 +122,10 @@ class ExcelControl {
 
           // ARMAZENANDO TODO TIPO DE DEVOLUÇÃO EM UMA SÓ COLEÇÃO
 
-          QuerySnapshot motoristasSnapshot2 =
-              await FirebaseFirestore.instance.collection('motoristas').get();
+          QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore.instance
+              .collection('motoristas')
+              .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+              .get();
           if (motoristasSnapshot2.docs.isNotEmpty) {
             DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
             String dt = motoristaDocument.get('dt');
@@ -151,12 +166,14 @@ class ExcelControl {
               QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore
                   .instance
                   .collection('motoristas')
+                  .where('uid', isEqualTo: IdentificacaoController.idUsuario())
                   .get();
               if (motoristasSnapshot2.docs.isNotEmpty) {
                 DocumentSnapshot motoristaDocument =
                     motoristasSnapshot2.docs[0];
                 String dt = motoristaDocument.get('dt');
                 String placa = motoristaDocument.get('placa');
+                String uid = motoristaDocument.get('uid');
 
                 await FirebaseFirestore.instance.collection('Devolutivos').add({
                   'hora': getCurrentTime(),
@@ -168,6 +185,7 @@ class ExcelControl {
                   'quantidade': quantidade,
                   'observacoes': observacoes,
                   'filial': cidade,
+                  'uid': uid,
                 });
               }
             }
@@ -179,8 +197,11 @@ class ExcelControl {
       }
 
       // Exibir dados da coleção "Sobras"
-      QuerySnapshot sobrasSnapshot =
-          await FirebaseFirestore.instance.collection('sobras').get();
+      QuerySnapshot sobrasSnapshot = await FirebaseFirestore.instance
+          .collection('sobras')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
+
       if (sobrasSnapshot.docs.isNotEmpty) {
         int linha =
             6; // Comece a partir da linha 6 (ou qualquer outra linha desejada)
@@ -199,12 +220,15 @@ class ExcelControl {
 
           // ARMAZENANDO TODO TIPO DE SOBRAS EM UMA SÓ COLEÇÃO
 
-          QuerySnapshot motoristasSnapshot2 =
-              await FirebaseFirestore.instance.collection('motoristas').get();
+          QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore.instance
+              .collection('motoristas')
+              .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+              .get();
           if (motoristasSnapshot2.docs.isNotEmpty) {
             DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
             String dt = motoristaDocument.get('dt');
             String placa = motoristaDocument.get('placa');
+            String uid = motoristaDocument.get('uid');
 
             await FirebaseFirestore.instance.collection('SobrasGerais').add({
               'data': getCurrentDate(),
@@ -215,6 +239,7 @@ class ExcelControl {
               'quantidade': quantidade,
               'observacoes': observacoes,
               'filial': cidade,
+              'uid': uid,
             });
           }
 
@@ -237,11 +262,14 @@ class ExcelControl {
               codigo == '904711' ||
               codigo == '903950' ||
               codigo == '904611') {
-            QuerySnapshot motoristasSnapshot2 =
-                await FirebaseFirestore.instance.collection('motoristas').get();
+            QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore.instance
+                .collection('motoristas')
+                .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+                .get();
             if (motoristasSnapshot2.docs.isNotEmpty) {
               DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
               String dt = motoristaDocument.get('dt');
+              String uid = motoristaDocument.get('uid');
 
               await FirebaseFirestore.instance.collection('Devolutivos').add({
                 'hora': getCurrentTime(),
@@ -252,6 +280,7 @@ class ExcelControl {
                 'quantidade': quantidade,
                 'observacoes': observacoes,
                 'filial': cidade,
+                'uid': uid,
               });
             }
           }
@@ -260,8 +289,11 @@ class ExcelControl {
       }
 
       // Exibir dados da coleção "Faltas"
-      QuerySnapshot faltasSnapshot =
-          await FirebaseFirestore.instance.collection('faltas').get();
+      QuerySnapshot faltasSnapshot = await FirebaseFirestore.instance
+          .collection('faltas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
+
       if (faltasSnapshot.docs.isNotEmpty) {
         int linha = 6;
         for (DocumentSnapshot faltaDocument in faltasSnapshot.docs) {
@@ -283,6 +315,7 @@ class ExcelControl {
             DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
             String dt = motoristaDocument.get('dt');
             String placa = motoristaDocument.get('placa');
+            String uid = motoristaDocument.get('uid');
 
             await FirebaseFirestore.instance.collection('FaltasGerais').add({
               'data': getCurrentDate(),
@@ -291,6 +324,7 @@ class ExcelControl {
               'nome': nome,
               'quantidade': quantidade,
               'filial': cidade,
+              'uid': uid,
             });
           }
 
@@ -299,8 +333,10 @@ class ExcelControl {
       }
 
       // Exibir dados da coleção "Trocas"
-      QuerySnapshot trocasSnapshot =
-          await FirebaseFirestore.instance.collection('trocas').get();
+      QuerySnapshot trocasSnapshot = await FirebaseFirestore.instance
+          .collection('trocas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
       if (trocasSnapshot.docs.isNotEmpty) {
         int linha = 6;
         for (DocumentSnapshot trocaDocument in trocasSnapshot.docs) {
@@ -322,6 +358,7 @@ class ExcelControl {
             DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
             String dt = motoristaDocument.get('dt');
             String placa = motoristaDocument.get('placa');
+            String uid = motoristaDocument.get('uid');
 
             await FirebaseFirestore.instance.collection('TrocasGerais').add({
               'data': getCurrentDate(),
@@ -330,6 +367,7 @@ class ExcelControl {
               'nome': nome,
               'quantidade': quantidade,
               'filial': cidade,
+              'uid': uid,
             });
           }
 
@@ -338,8 +376,10 @@ class ExcelControl {
       }
 
       // Exibir dados da coleção "Avarias"
-      QuerySnapshot avariasSnapshot =
-          await FirebaseFirestore.instance.collection('avarias').get();
+      QuerySnapshot avariasSnapshot = await FirebaseFirestore.instance
+          .collection('avarias')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
       if (avariasSnapshot.docs.isNotEmpty) {
         int linha = 20;
         for (DocumentSnapshot avariaDocument in avariasSnapshot.docs) {
@@ -357,11 +397,15 @@ class ExcelControl {
 
           // ARMAZENANDO TODO TIPO DE AVARIAS EM UMA SÓ COLEÇÃO
 
-          QuerySnapshot motoristasSnapshot2 =
-              await FirebaseFirestore.instance.collection('motoristas').get();
+          QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore.instance
+              .collection('motoristas')
+              .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+              .get();
+
           if (motoristasSnapshot2.docs.isNotEmpty) {
             DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
             String dt = motoristaDocument.get('dt');
+            String uid = motoristaDocument.get('uid');
 
             await FirebaseFirestore.instance.collection('AvariadosGerais').add({
               'data': getCurrentDate(),
@@ -370,6 +414,7 @@ class ExcelControl {
               'quantidade': quantidade,
               'observacoes': observacao,
               'filial': cidade,
+              'uid': uid,
             });
 
             // FIM DO ARMAZENAMENTO DE DEVOLUÇÕES
@@ -380,8 +425,11 @@ class ExcelControl {
       }
 
 // Exibir dados da coleção "Caixas"
-      QuerySnapshot caixasSnapshot =
-          await FirebaseFirestore.instance.collection('caixas').get();
+      QuerySnapshot caixasSnapshot = await FirebaseFirestore.instance
+          .collection('caixas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
+
       if (caixasSnapshot.docs.isNotEmpty) {
         Map<String, int> quantidadePorNome =
             {}; // Mapa para armazenar a quantidade por nome
@@ -448,6 +496,7 @@ class ExcelControl {
             DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
             String dt = motoristaDocument.get('dt');
             String placa = motoristaDocument.get('placa');
+            String uid = motoristaDocument.get('uid');
 
             await FirebaseFirestore.instance.collection('Ativos').add({
               'hora': getCurrentTime(),
@@ -458,6 +507,7 @@ class ExcelControl {
               'quantidade': quantidade,
               'observacoes': observacao,
               'filial': cidade,
+              'uid': uid,
             });
           }
         }
@@ -465,8 +515,11 @@ class ExcelControl {
         print('A coleção "caixas" está vazia.');
       }
 
-      QuerySnapshot motoristasSnapshot2 =
-          await FirebaseFirestore.instance.collection('motoristas').get();
+      QuerySnapshot motoristasSnapshot2 = await FirebaseFirestore.instance
+          .collection('motoristas')
+          .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+          .get();
+
       if (motoristasSnapshot2.docs.isNotEmpty) {
         DocumentSnapshot motoristaDocument = motoristasSnapshot2.docs[0];
 
@@ -527,56 +580,70 @@ String getCurrentTime() {
 }
 
 void excluirMotoristas() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('motoristas').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('motoristas')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirDevolucoes() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('devolucoes').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('devolucoes')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirSobras() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('sobras').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('sobras')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirFaltas() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('faltas').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('faltas')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirTrocas() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('trocas').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('trocas')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirAvarias() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('avarias').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('avarias')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }
 }
 
 void excluirCaixas() async {
-  QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('caixas').get();
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('caixas')
+      .where('uid', isEqualTo: IdentificacaoController.idUsuario())
+      .get();
   for (var doc in snapshot.docs) {
     doc.reference.delete();
   }

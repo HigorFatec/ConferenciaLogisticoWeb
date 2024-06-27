@@ -129,38 +129,9 @@ class _EscolherPageState extends State<EscolherPage> {
                     ),
                     child: const Row(
                       children: [
-                        SizedBox(width: 80),
+                        SizedBox(width: 100),
                         Text(
-                          'Conferencia 2',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Card(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).pushReplacementNamed('/home');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 16.0,
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.person),
-                        SizedBox(width: 20),
-                        Text(
-                          'Retorno de Rotas',
+                          'Tela Inicial',
                           style: TextStyle(
                             fontSize: 20.0,
                             fontWeight: FontWeight.bold,
@@ -187,11 +158,40 @@ class _EscolherPageState extends State<EscolherPage> {
                     child: const Row(
                       children: [
                         Icon(Icons.local_shipping),
-                        SizedBox(width: 20),
+                        SizedBox(width: 15),
                         Text(
-                          'Conferência de Mapas',
+                          'Conferência de Mapas de Saída',
                           style: TextStyle(
-                            fontSize: 20.0,
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 30,
+              ),
+              Card(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).pushReplacementNamed('/home');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10.0,
+                      horizontal: 16.0,
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.person),
+                        SizedBox(width: 15),
+                        Text(
+                          'Conferência de Mapas de Retorno',
+                          style: TextStyle(
+                            fontSize: 16.0,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -216,11 +216,11 @@ class _EscolherPageState extends State<EscolherPage> {
                     child: const Row(
                       children: [
                         Icon(Icons.local_shipping),
-                        SizedBox(width: 20),
+                        SizedBox(width: 15),
                         Text(
                           'Entrada/Saida Carretas',
                           style: TextStyle(
-                            fontSize: 20.0,
+                            fontSize: 16.0,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -266,11 +266,11 @@ class _EscolherPageState extends State<EscolherPage> {
                     child: const Row(
                       children: [
                         Icon(Icons.local_shipping),
-                        SizedBox(width: 20),
+                        SizedBox(width: 15),
                         Text(
                           'Painel Administrador',
                           style: TextStyle(
-                            fontSize: 20.0,
+                            fontSize: 16.0,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class Motorista2 {
   final String dt;
@@ -33,30 +33,25 @@ Future<bool> _verificarDtNoFirebase(String dt) async {
   return query.docs.isNotEmpty;
 }
 
-Future<List<Motorista2>?> fetchMotoristasFromExcel() async {
-  // Carregue o arquivo Excel como um objeto ByteData
-  final ByteData data = await rootBundle.load('lib/assets/resultado.xlsx');
+Future<List<Motorista2>?> fetchMotoristasFromFirestore() async {
+  // Obtenha uma referência para a coleção 'teste_json' no Firestore
+  final collection = FirebaseFirestore.instance.collection('SaidasDTS');
 
-  // Converta o ByteData para uma lista de bytes
-  final Uint8List bytes = data.buffer.asUint8List();
-
-  // Crie um objeto Excel a partir dos bytes da planilha
-  final excel = Excel.decodeBytes(bytes);
-
-  // Obtenha a primeira planilha do arquivo Excel
-  final sheet = excel.tables[excel.tables.keys.first];
+  // Obtenha os documentos da coleção 'teste_json'
+  final snapshot = await collection.get();
 
   // Converta as linhas da planilha em objetos Motorista
-  final motoristas2 = sheet?.rows.map((row) {
-    final dt = row[0]?.value?.toString() ?? '';
-    final placa = row[8]?.value?.toString() ?? '';
+  final motoristas2 = snapshot.docs.map((doc) {
+    final data = doc.data();
+    final dt = data['TRANSPORTE']?.toString() ?? '';
+    final placa = data['Placa']?.toString() ?? '';
 
     return Motorista2(
       dt: dt,
       placa: placa,
     );
   }).toList();
-  return motoristas2?.toSet().toList();
+  return motoristas2.toSet().toList();
 }
 
 class MotoristasScreen2 extends StatefulWidget {
@@ -106,7 +101,7 @@ class _MotoristasScreenState2 extends State<MotoristasScreen2> {
             ),
             Expanded(
               child: FutureBuilder<List<Motorista2>?>(
-                future: fetchMotoristasFromExcel().catchError((error) {
+                future: fetchMotoristasFromFirestore().catchError((error) {
                   print('Erro ao carregar DTS: $error');
                   return null; // Return null to indicate error
                 }),
@@ -118,6 +113,9 @@ class _MotoristasScreenState2 extends State<MotoristasScreen2> {
                     return const Center(child: Text('Erro ao carregar DTS'));
                   } else {
                     final motoristas2 = snapshot.data!;
+
+                    motoristas2.sort((a, b) => a.placa.compareTo(b.placa));
+
                     return ListView.builder(
                       itemCount: motoristas2.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -176,4 +174,10 @@ class _MotoristasScreenState2 extends State<MotoristasScreen2> {
       ),
     );
   }
+}
+
+String getCurrentDate() {
+  DateTime now = DateTime.now();
+  String formattedDate = DateFormat('dd/MM/yyyy').format(now);
+  return formattedDate;
 }
