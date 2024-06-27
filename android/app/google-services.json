@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "221575439519",
+    "project_id": "cdrotas2",
+    "storage_bucket": "cdrotas2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:221575439519:android:e76a1fd415f311ff672eaa",
+        "android_client_info": {
+          "package_name": "com.example.meuapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "221575439519-gbmqsl1ca180cqr6j19s9fublsk0okgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAfr1Ha4X50lZXC9LCc-1g2IqH66BOmkc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "221575439519-gbmqsl1ca180cqr6j19s9fublsk0okgm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "221575439519-lgjnpup4emothhl01s7ou5lsgvbmldkh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.meuapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

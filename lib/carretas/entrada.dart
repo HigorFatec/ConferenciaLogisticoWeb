@@ -1,0 +1,383 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:meuapp/controller/drawner_controller.dart';
+
+import '../view/util.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'carreta_dt.dart';
+import 'entrada_controller.dart';
+
+class EntradaScreen extends StatefulWidget {
+  final CarretaDT? motoristaSelecionado;
+
+  const EntradaScreen({Key? key, this.motoristaSelecionado}) : super(key: key);
+
+  @override
+  State<EntradaScreen> createState() => EntradaScreenState();
+}
+
+class EntradaScreenState extends State<EntradaScreen> {
+  final firestoreController = EntradaController();
+
+  final _nomeController = TextEditingController();
+  final _dtController = TextEditingController();
+
+  List<String> motoristas = [];
+
+  String placaCarreta = '';
+  String transportadora = '';
+  String tipo = 'DEDICADA';
+  String dt = '';
+  String telefone = '';
+  String motorista = '';
+  String placa = '';
+  String data = '';
+  String horario = '';
+  String veiculo = 'ASA DELTA';
+  String produto = 'DESCARTAVEL';
+
+  @override
+  void initState() {
+    super.initState();
+    data = getCurrentDate();
+    horario = getCurrentTime();
+    if (widget.motoristaSelecionado != null) {
+      _dtController.text = widget.motoristaSelecionado!.dt;
+      _nomeController.text = widget.motoristaSelecionado!.nome;
+      transportadora = _nomeController.text;
+      dt = _dtController.text;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: Drawer(
+        child: Column(
+          children: [
+            CustomDrawerHeader.getHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.home),
+                      title: const Text('Inicio'),
+                      subtitle: const Text('Tela Inicial'),
+                      onTap: () {
+                        Navigator.of(context).pushReplacementNamed('/carretas');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        title: const Text('Entrada de Carreta'),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              height: MediaQuery.of(context)
+                  .size
+                  .height, // Define a altura do contêiner igual à altura da tela
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('lib/images/new3.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 16.0),
+                      Container(
+                        color: Colors.white,
+                        child: DropdownButtonFormField<String>(
+                          value: tipo, // Valor selecionado
+                          onChanged: (newValue) {
+                            setState(() {
+                              tipo = newValue!;
+                            });
+                          },
+                          items: ['DEDICADA', 'SPOT'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'A Carreta é TRT?',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Container(
+                        color: Colors.white,
+                        child: DropdownButtonFormField<String>(
+                          value: produto, // Valor selecionado
+                          onChanged: (newValue) {
+                            setState(() {
+                              produto = newValue!;
+                            });
+                          },
+                          items:
+                              ['RETORNAVEL', 'DESCARTAVEL'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Tipo de Produto',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Container(
+                        color: Colors.white,
+                        child: DropdownButtonFormField<String>(
+                          value: veiculo, // Valor selecionado
+                          onChanged: (newValue) {
+                            setState(() {
+                              veiculo = newValue!;
+                            });
+                          },
+                          items: ['OCO', 'ASA DELTA', 'BITREM']
+                              .map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Tipo de Veiculo',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            setState(() {
+                              dt = text;
+                            });
+                          },
+                          controller: _dtController,
+                          decoration: InputDecoration(
+                            labelText: 'Número da DT',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/listCarretas');
+                              },
+                              child: const Icon(
+                                Icons.list,
+                                color: Colors.black,
+                                size: 30.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            transportadora = text;
+                          },
+                          controller: _nomeController,
+                          decoration: const InputDecoration(
+                            labelText: 'Transportadora',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.list),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            placaCarreta = text;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Placa Carreta',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.directions_car),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            motorista = text;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Motorista',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.person),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            telefone = text;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Telefone',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.directions_car),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          initialValue: getCurrentDate(),
+                          onChanged: (text) {
+                            data = text;
+                          },
+                          enabled: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Data Chegada',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.calendar_today),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Card(
+                        child: TextFormField(
+                          initialValue: getCurrentTime(),
+                          onChanged: (text) {
+                            horario = text;
+                          },
+                          enabled: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Hora Chegada',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.access_time),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (_validateFields()) {
+                            // SALVAR DADOS NO FIREBASE
+                            firestoreController.salvarDadosCarreta(
+                              tipo,
+                              transportadora,
+                              dt,
+                              placa,
+                              placaCarreta,
+                              motorista,
+                              telefone,
+                              data,
+                              horario,
+                              produto,
+                              veiculo,
+                            );
+                            //});
+                            Navigator.pushNamed(context, '/carretas');
+                          }
+                        },
+                        child: const Text('Salvar'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<List<String>> getMotoristas() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('motoristas5').get();
+    final motoristas =
+        snapshot.docs.map((doc) => doc['motorista'] as String).toList();
+    return motoristas;
+  }
+
+  Future<List<String>> getDts() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('motoristas5').get();
+    final dts = snapshot.docs.map((doc) => doc['dt'] as String).toList();
+    return dts;
+  }
+
+  Future<List<String>> getPlacas() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('motoristas5').get();
+    final placas = snapshot.docs.map((doc) => doc['placa'] as String).toList();
+    return placas;
+  }
+
+  bool _validateFields() {
+    if (_dtController.text.isEmpty || _nomeController.text.isEmpty) {
+      erro(context, 'Preencha todos os campos.');
+      return false;
+    } else {
+      sucesso(context, 'Dados salvos com sucesso.');
+      Navigator.of(context).pushNamed('/carretas');
+      return true;
+    }
+  }
+
+  String getCurrentDate() {
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat('dd/MM/yyyy').format(now);
+    return formattedDate;
+  }
+
+  String getCurrentTime() {
+    DateTime now = DateTime.now();
+    String formattedTime = DateFormat('HH:mm:ss').format(now);
+    return formattedTime;
+  }
+
+  void _removerMotorista(int index) async {
+    if (index >= 0 && index < motoristas.length) {
+      String motoristaRemover = motoristas[index];
+
+      // Remover motorista do Firestore
+      await FirebaseFirestore.instance
+          .collection('motoristas5')
+          .where('motorista', isEqualTo: motoristaRemover)
+          .get()
+          .then((snapshot) {
+        if (snapshot.docs.isNotEmpty) {
+          String docId = snapshot.docs.first.id;
+          FirebaseFirestore.instance
+              .collection('motoristas5')
+              .doc(docId)
+              .delete();
+        }
+      });
+
+      // Remover motorista da lista
+      setState(() {
+        motoristas.removeAt(index);
+      });
+    }
+  }
+}
